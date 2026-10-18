@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Inicio - Ansiosxs – Nuevas Lecturas</title>
+  <meta name="description" content="Redescubre la infancia a través del arte y la narrativa. Experiencias creativas para niños, jóvenes y adultos.">
+  <link rel="icon" type="image/png" href="images/logocircular.png">
+  <link rel="apple-touch-icon" href="images/logocircular.png">
+  <link rel="preload" as="image" href="images/carousel/main.webp" type="image/webp" fetchpriority="high">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body data-page="home">
+
+  <nav class="nav nav--home">
+    <div class="container nav__inner">
+      <a class="nav__logo" href="index.html" aria-label="Ansiosxs – Nuevas Lecturas, inicio">
+        <img src="images/logo.png" alt="Ansiosxs Nuevas Lecturas">
+      </a>
+
+      <div class="nav__links">
+        <a href="index.html" class="is-active">Inicio</a>
+        <a href="quienes-somos.html">Quienes somos</a>
+        <div class="nav__item nav__item--dropdown">
+          <a href="proyectos.html">Proyectos <svg class="icon nav__caret" aria-hidden="true"><use href="#i-chevron-down"></use></svg></a>
+          <div class="dropdown">
+            <a href="proyectos.html#te-leo-te-dibujo">Te leo, te dibujo</a>
+            <a href="proyectos.html#insectaria">Biblioteca comunitaria Insectaria</a>
+            <a href="proyectos.html#bibliomovil">Bibliomóvil</a>
+            <a href="proyectos.html#talleres">Talleres Crea-Expresa</a>
+            <a href="proyectos.html#colaboraciones">Colaboraciones</a>
+          </div>
+        </div>
+        <a href="como-colaborar.html">Como colaborar</a>
+        <a href="contacto.html">Contacto</a>
+      </div>
+
+      <button class="nav__toggle" type="button" aria-label="Abrir menú" aria-expanded="false" aria-controls="menu-movil">
+        <svg class="icon icon-lg" aria-hidden="true"><use href="#i-menu"></use></svg>
+      </button>
+    </div>
+
+    <div class="mobile-menu" id="menu-movil">
+      <a href="index.html" class="is-active">Inicio</a>
+      <a href="quienes-somos.html">Quienes somos</a>
+      <a href="proyectos.html">Proyectos</a>
+      <div class="mobile-menu__sub">
+        <a href="proyectos.html#te-leo-te-dibujo">Te leo, te dibujo</a>
+        <a href="proyectos.html#insectaria">Biblioteca comunitaria Insectaria</a>
+        <a href="proyectos.html#bibliomovil">Bibliomóvil</a>
+        <a href="proyectos.html#talleres">Talleres Crea-Expresa</a>
+        <a href="proyectos.html#colaboraciones">Colaboraciones</a>
+      </div>
+      <a href="como-colaborar.html">Como colaborar</a>
+      <a href="contacto.html">Contacto</a>
+    </div>
+  </nav>
+
+  <main>
+    <!-- Hero / carrusel -->
+    <section class="hero">
+      <div class="hero__slides">
+        <div class="hero__slide is-active">
+          <div class="hero__placeholder"></div>
+          <img src="images/carousel/main.webp" alt="Imagen principal del carrusel - Biblioteca comunitaria" fetchpriority="high" decoding="sync">
+          <div class="hero__overlay"></div>
+          <div class="hero__content">
+            <h1 class="hero__title">Bienvenides a Ansiosxs</h1>
+            <p class="hero__text">Somos una organización que imagina otros modos de leer, sentir y compartir. Creamos experiencias donde la narrativa gráfica, el arte y la lectura se cruzan con la emoción, la infancia y la comunidad.</p>
+            <p class="hero__cta"><a class="btn btn-lg btn-yellow sticker-button" href="proyectos.html">Explorar Proyectos <svg class="icon" aria-hidden="true"><use href="#i-arrow-right"></use></svg></a></p>
+          </div>
+        </div>
+
+        <div class="hero__slide" aria-hidden="true">
+          <div class="hero__placeholder"></div>
+          <img src="images/carousel/main.webp" alt="Imagen principal del carrusel - Biblioteca comunitaria" loading="lazy" decoding="async">
+          <div class="hero__overlay"></div>
+          <div class="hero__content">
+            <h1 class="hero__title">Conoce Nuestro Laboratorio Creativo</h1>
+            <p class="hero__text">Descubre quiénes somos, qué nos mueve y hacia dónde vamos. Sumérgete en nuestra historia y nuestra pasión por transformar a través del arte.</p>
+            <p class="hero__cta"><a class="btn btn-lg btn-pink sticker-button" href="quienes-somos.html">Quiénes Somos <svg class="icon" aria-hidden="true"><use href="#i-arrow-right"></use></svg></a></p>
+          </div>
+        </div>
+
+        <div class="hero__slide" aria-hidden="true">
+          <div class="hero__placeholder"></div>
+          <img src="images/carousel/main.webp" alt="Imagen principal del carrusel - Biblioteca comunitaria" loading="lazy" decoding="async">
+          <div class="hero__overlay"></div>
+          <div class="hero__content">
+            <h1 class="hero__title">Forma parte</h1>
+            <p class="hero__text">Tu apoyo es fundamental para seguir tejiendo redes creativas. Descubre cómo puedes colaborar y ayudarnos a llevar más arte y lectura a más comunidades.</p>
+            <p class="hero__cta"><a class="btn btn-lg btn-blue sticker-button" href="como-colaborar.html">Cómo Colaborar <svg class="icon" aria-hidden="true"><use href="#i-arrow-right"></use></svg></a></p>
+          </div>
+        </div>
+      </div>
+
+      <button class="hero__arrow hero__arrow--prev" type="button" data-carousel="prev" aria-label="Slide anterior">
+        <svg class="icon" aria-hidden="true"><use href="#i-chevron-left"></use></svg>
+      </button>
+      <button class="hero__arrow hero__arrow--next" type="button" data-carousel="next" aria-label="Slide siguiente">
+        <svg class="icon" aria-hidden="true"><use href="#i-chevron-right"></use></svg>
+      </button>
+
+      <div class="hero__dots" role="tablist" aria-label="Slides">
+        <button class="hero__dot is-active" type="button" aria-label="Slide 1"></button>
+        <button class="hero__dot" type="button" aria-label="Slide 2"></button>
+        <button class="hero__dot" type="button" aria-label="Slide 3"></button>
+      </div>
+    </section>
+
+    <!-- Nuestra propuesta -->
+    <section class="section bg-white">
+      <img class="mascot mascot--serpi" src="images/mascotas/serpi.png" alt="" aria-hidden="true">
+      <div class="container">
+        <div class="reveal text-center mb-16">
+          <h2 class="font-cookie text-purple" style="font-size: clamp(1.875rem, 4vw, 2.25rem); font-weight: 700; margin-bottom: 1rem;">Nuestra propuesta</h2>
+          <p class="text-soft" style="font-size: 1.125rem; max-width: 48rem; margin-inline: auto;">
+            Somos un laboratorio creativo que va más allá del papel. Llevamos las narrativas al territorio, al cuerpo y a lo colectivo, porque creemos que leer puede ser un acto inmediato de cambio en nuestras realidades.
+          </p>
+        </div>
+
+        <div class="grid grid-3">
+          <article class="reveal text-center bg-yellow-faint" data-delay="0" style="padding: 1.5rem; border: 2px solid var(--foreground); border-radius: 1rem;">
+            <div class="circle-icon bg-yellow-soft mb-4">
+              <svg class="icon icon-lg" aria-hidden="true"><use href="#i-palette"></use></svg>
+            </div>
+            <h3 class="mb-2" style="font-weight: 600; font-size: 1.125rem;">Exploración Artística</h3>
+            <p class="text-soft" style="font-size: 0.875rem; line-height: 1.7;">Experimentamos con medios y formatos diversos, desde fanzines hasta kamishibai, para que leer sea un acto de creación y descubrimiento.</p>
+          </article>
+
+          <article class="reveal text-center bg-yellow-faint" data-delay="0.1" style="padding: 1.5rem; border: 2px solid var(--foreground); border-radius: 1rem;">
+            <div class="circle-icon bg-yellow-soft mb-4">
+              <svg class="icon icon-lg" aria-hidden="true"><use href="#i-users"></use></svg>
+            </div>
+            <h3 class="mb-2" style="font-weight: 600; font-size: 1.125rem;">Comunidad y Territorio</h3>
+            <p class="text-soft" style="font-size: 0.875rem; line-height: 1.7;">Llevamos nuestra biblioteca móvil y talleres a plazas, escuelas rurales y ferias, sembrando curiosidad y afecto lector donde más se necesita.</p>
+          </article>
+
+          <article class="reveal text-center bg-yellow-faint" data-delay="0.2" style="padding: 1.5rem; border: 2px solid var(--foreground); border-radius: 1rem;">
+            <div class="circle-icon bg-yellow-soft mb-4">
+              <svg class="icon icon-lg" aria-hidden="true"><use href="#i-share"></use></svg>
+            </div>
+            <h3 class="mb-2" style="font-weight: 600; font-size: 1.125rem;">Encuentro y Transformación</h3>
+            <p class="text-soft" style="font-size: 0.875rem; line-height: 1.7;">Abrimos espacios seguros para imaginar, a través del juego y la conversación, otras formas de vivir, sentir y conectar con lxs demás.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- Nuestros proyectos -->
+    <section class="section bg-pink-soft">
+      <div class="container">
+        <div class="reveal text-center mb-16">
+          <h2 class="font-cookie" style="font-size: clamp(1.875rem, 4vw, 2.25rem); font-weight: 700; margin-bottom: 1rem;">Nuestros Proyectos</h2>
+          <p class="text-soft" style="font-size: 1.125rem; max-width: 42rem; margin-inline: auto;">Descubre nuestras iniciativas creativas que transforman comunidades a través del arte y la lectura.</p>
+        </div>
+
+        <div class="grid grid-3">
+          <article class="reveal sticker-card sticker-card-hover flex flex-col" style="overflow: hidden;">
+            <div class="media-lazy" style="aspect-ratio: 3 / 2;">
+              <img data-src="images/proyectos/tltd4_mini.jpg" alt="Te leo, te dibujo" loading="lazy" decoding="async">
+            </div>
+            <div class="flex flex-col flex-1" style="padding: 1.5rem;">
+              <h3 class="font-serif mb-3 flex-1" style="font-size: 1.25rem; font-weight: 600;">Te leo, te dibujo</h3>
+              <p class="text-soft mb-4" style="font-size: 0.875rem; line-height: 1.7;">Club de lectura de narrativa gráfica con gente dibujando y leyendo cómics juntos</p>
+              <a class="btn btn-purple btn-block btn-round mt-auto" href="proyectos.html#te-leo-te-dibujo">Conocer Más</a>
+            </div>
+          </article>
+
+          <article class="reveal sticker-card sticker-card-hover flex flex-col" data-delay="0.1" style="overflow: hidden;">
+            <div class="media-lazy" style="aspect-ratio: 3 / 2;">
+              <img data-src="images/proyectos/librero.jpg" alt="Insectaria" loading="lazy" decoding="async">
+            </div>
+            <div class="flex flex-col flex-1" style="padding: 1.5rem;">
+              <h3 class="font-serif mb-3 flex-1" style="font-size: 1.25rem; font-weight: 600;">Insectaria</h3>
+              <p class="text-soft mb-4" style="font-size: 0.875rem; line-height: 1.7;">Biblioteca comunitaria especializada en narrativas ilustradas</p>
+              <a class="btn btn-purple btn-block btn-round mt-auto" href="proyectos.html#insectaria">Conocer Más</a>
+            </div>
+          </article>
+
+          <article class="reveal sticker-card sticker-card-hover flex flex-col" data-delay="0.2" style="overflow: hidden;">
+            <div class="media-lazy" style="aspect-ratio: 3 / 2;">
+              <img data-src="images/proyectos/bibliomovil.jpeg" alt="Bibliomóvil" loading="lazy" decoding="async">
+            </div>
+            <div class="flex flex-col flex-1" style="padding: 1.5rem;">
+              <h3 class="font-serif mb-3 flex-1" style="font-size: 1.25rem; font-weight: 600;">Bibliomóvil</h3>
+              <p class="text-soft mb-4" style="font-size: 0.875rem; line-height: 1.7;">Nuevas Lecturas Móviles – Ruta Costera</p>
+              <a class="btn btn-purple btn-block btn-round mt-auto" href="proyectos.html#bibliomovil">Conocer Más</a>
+            </div>
+          </article>
+        </div>
+
+        <div class="reveal text-center mt-12" data-delay="0.3">
+          <a class="btn btn-lg btn-blue sticker-button" href="proyectos.html">Ver Todos los Proyectos <svg class="icon" aria-hidden="true"><use href="#i-arrow-right"></use></svg></a>
+        </div>
+      </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="section bg-yellow-soft">
+      <div class="container container-text text-center">
+        <div class="reveal">
+          <h2 class="font-cookie mb-6" style="font-size: clamp(1.875rem, 4vw, 2.25rem); font-weight: 700;">Únete a Nuestra Comunidad Creativa</h2>
+          <p class="text-soft mb-8" style="font-size: 1.125rem;">Descubre talleres, eventos y proyectos que despiertan la imaginación y fortalecen los vínculos comunitarios.</p>
+          <div class="flex flex-wrap justify-center gap-4">
+            <a class="btn btn-lg btn-blue sticker-button" href="como-colaborar.html">Como Colaborar</a>
+            <a class="btn btn-lg btn-outline-pink sticker-button" href="contacto.html">Contactar</a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="container" style="padding-block: 3rem;">
+      <div class="footer__grid">
+        <div>
+          <a href="index.html" class="flex items-center mb-4" aria-label="Ansiosxs – Nuevas Lecturas, inicio">
+            <img src="images/logo.png" alt="Ansiosxs Nuevas Lecturas" style="height: 2.5rem; width: auto;">
+          </a>
+          <p class="text-soft mb-4" style="max-width: 28rem;">Un laboratorio creativo que explora la lectura más allá del papel. Llevamos las narrativas al territorio, al cuerpo y a lo colectivo, creando un cambio a través del arte.</p>
+          <div class="social">
+            <a href="https://www.instagram.com/ansiosxs" target="_blank" rel="noopener noreferrer" aria-label="Instagram" class="social-instagram"><svg class="icon" aria-hidden="true"><use href="#i-instagram"></use></svg></a>
+            <a href="https://www.facebook.com/Ansiosxs/" target="_blank" rel="noopener noreferrer" aria-label="Facebook" class="social-facebook"><svg class="icon" aria-hidden="true"><use href="#i-facebook"></use></svg></a>
+            <a href="https://www.youtube.com/channel/UCMWvXVIqLlI72pXkdeWM62g" target="_blank" rel="noopener noreferrer" aria-label="YouTube" class="social-youtube"><svg class="icon" aria-hidden="true"><use href="#i-youtube"></use></svg></a>
+            <a href="https://www.linkedin.com/company/ong-ansiosxs-nuevas-lecturas/?viewAsMember=true" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn" class="social-linkedin"><svg class="icon" aria-hidden="true"><use href="#i-linkedin"></use></svg></a>
+            <a href="mailto:ansiosxs@gmail.com" aria-label="Enviar correo" class="social-mail"><svg class="icon" aria-hidden="true"><use href="#i-mail"></use></svg></a>
+          </div>
+        </div>
+
+        <div>
+          <span class="footer__title">Enlaces Rápidos</span>
+          <ul class="footer__list">
+            <li><a href="quienes-somos.html">Quienes Somos</a></li>
+            <li><a href="proyectos.html">Proyectos</a></li>
+            <li><a href="como-colaborar.html">Como Colaborar</a></li>
+            <li><a href="contacto.html">Contacto</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <span class="footer__title">Contacto</span>
+          <ul class="footer__list footer__contact">
+            <li>
+              <svg class="icon icon-sm" aria-hidden="true"><use href="#i-mail"></use></svg>
+              <a href="mailto:ansiosxs@gmail.com">ansiosxs@gmail.com</a>
+            </li>
+            <li>
+              <svg class="icon icon-sm" aria-hidden="true"><use href="#i-phone"></use></svg>
+              <span>+56 9 44326527</span>
+            </li>
+            <li>
+              <svg class="icon icon-sm" aria-hidden="true"><use href="#i-map-pin"></use></svg>
+              <span>Juan Martínez de Rozas 1445, Concepción, Bío Bío</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="footer__bottom">
+        <p>© <span data-year>2025</span> Ansiosxs – Nuevas Lecturas. Todos los derechos reservados.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/icons.js" defer></script>
+  <script src="js/main.js" defer></script>
+  <script src="js/carousel.js" defer></script>
+</body>
+</html>

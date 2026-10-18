@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contacto - Ansiosxs – Nuevas Lecturas</title>
+  <meta name="description" content="Ponte en contacto con nosotros para participar, colaborar o conocer más sobre nuestra propuesta artística en Concepción, Chile.">
+  <link rel="icon" type="image/png" href="images/logocircular.png">
+  <link rel="apple-touch-icon" href="images/logocircular.png">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body data-page="contact">
+
+  <nav class="nav">
+    <div class="container nav__inner">
+      <a class="nav__logo" href="index.html" aria-label="Ansiosxs – Nuevas Lecturas, inicio">
+        <img src="images/logo.png" alt="Ansiosxs Nuevas Lecturas">
+      </a>
+
+      <div class="nav__links">
+        <a href="index.html">Inicio</a>
+        <a href="quienes-somos.html">Quienes somos</a>
+        <div class="nav__item nav__item--dropdown">
+          <a href="proyectos.html">Proyectos <svg class="icon nav__caret" aria-hidden="true"><use href="#i-chevron-down"></use></svg></a>
+          <div class="dropdown">
+            <a href="proyectos.html#te-leo-te-dibujo">Te leo, te dibujo</a>
+            <a href="proyectos.html#insectaria">Biblioteca comunitaria Insectaria</a>
+            <a href="proyectos.html#bibliomovil">Bibliomóvil</a>
+            <a href="proyectos.html#talleres">Talleres Crea-Expresa</a>
+            <a href="proyectos.html#colaboraciones">Colaboraciones</a>
+          </div>
+        </div>
+        <a href="como-colaborar.html">Como colaborar</a>
+        <a href="contacto.html" class="is-active">Contacto</a>
+      </div>
+
+      <button class="nav__toggle" type="button" aria-label="Abrir menú" aria-expanded="false" aria-controls="menu-movil">
+        <svg class="icon icon-lg" aria-hidden="true"><use href="#i-menu"></use></svg>
+      </button>
+    </div>
+
+    <div class="mobile-menu" id="menu-movil">
+      <a href="index.html">Inicio</a>
+      <a href="quienes-somos.html">Quienes somos</a>
+      <a href="proyectos.html">Proyectos</a>
+      <div class="mobile-menu__sub">
+        <a href="proyectos.html#te-leo-te-dibujo">Te leo, te dibujo</a>
+        <a href="proyectos.html#insectaria">Biblioteca comunitaria Insectaria</a>
+        <a href="proyectos.html#bibliomovil">Bibliomóvil</a>
+        <a href="proyectos.html#talleres">Talleres Crea-Expresa</a>
+        <a href="proyectos.html#colaboraciones">Colaboraciones</a>
+      </div>
+      <a href="como-colaborar.html">Como colaborar</a>
+      <a href="contacto.html" class="is-active">Contacto</a>
+    </div>
+  </nav>
+
+
+  <main>
+    <div class="page-top">
+      <section class="section bg-purple-soft">
+        <div class="container container-text text-center">
+          <div class="reveal">
+            <h1 class="font-cookie text-purple mb-6" style="font-size: clamp(2.25rem, 5vw, 3rem); font-weight: 700;">Conectemos</h1>
+            <p class="text-soft" style="font-size: 1.125rem; line-height: 1.8;">Nos encanta conocer a personas interesadas en el arte, la narrativa y la transformación social. ¡Hablemos sobre cómo podemos crear juntos!</p>
+            <img class="mascot mascot--lobo-sm" src="images/mascotas/lobo.png" alt="" aria-hidden="true">
+          </div>
+        </div>
+      </section>
+
+      <section class="section bg-white">
+        <div class="container">
+          <div class="grid grid-2">
+            <div class="reveal reveal-left bg-yellow-soft" style="padding: 2rem; border-radius: 1rem; border: 2px solid var(--foreground);">
+              <h2 class="font-cookie mb-6" style="font-size: 1.875rem; font-weight: 700;">Envíanos un Mensaje</h2>
+              <form id="contact-form" class="form-grid" novalidate>
+                <div class="form-grid__row">
+                  <div class="field">
+                    <label for="name">Nombre *</label>
+                    <input type="text" id="name" name="name" required placeholder="Tu nombre completo">
+                  </div>
+                  <div class="field">
+                    <label for="email">Correo Electrónico *</label>
+                    <input type="email" id="email" name="email" required placeholder="tu@email.com">
+                  </div>
+                </div>
+
+                <div class="field">
+                  <label for="subject">Asunto *</label>
+                  <select id="subject" name="subject" required>
+                    <option value="">Selecciona un tema</option>
+                    <option value="talleres">Información sobre talleres</option>
+                    <option value="colaboracion">Propuesta de colaboración</option>
+                    <option value="practica">Práctica de ilustración</option>
+                    <option value="voluntariado">Voluntariado</option>
+                    <option value="otros">Otros</option>
+                  </select>
+                </div>
+
+                <div class="field">
+                  <label for="message">Mensaje *</label>
+                  <textarea id="message" name="message" rows="6" required placeholder="Cuéntanos más sobre tu consulta o propuesta..."></textarea>
+                </div>
+
+                <div class="checkbox-field">
+                  <input type="checkbox" id="newsletter" name="newsletter">
+                  <label for="newsletter">Quiero recibir noticias y actualizaciones</label>
+                </div>
+
+                <button class="btn btn-lg btn-pink sticker-button" type="submit">
+                  Enviar Mensaje <svg class="icon" aria-hidden="true"><use href="#i-send"></use></svg>
+                </button>
+              </form>
+            </div>
+
+            <div class="reveal reveal-right flex flex-col gap-8">
+              <div>
+                <h2 class="font-cookie mb-6" style="font-size: 1.875rem; font-weight: 700;">Encuéntranos</h2>
+                <div class="flex flex-col gap-6">
+                <div class="flex items-start gap-4">
+                  <div class="circle-icon-sm bg-purple-soft">
+                    <svg class="icon text-purple" aria-hidden="true"><use href="#i-mail"></use></svg>
+                  </div>
+                  <div>
+                    <h3 class="mb-1" style="font-weight: 600;">Correo Electrónico</h3>
+                    <a class="text-pink mb-1" style="font-weight: 500;" href="mailto:ansiosxs@gmail.com">ansiosxs@gmail.com</a>
+                    
+                  </div>
+                </div>
+                <div class="flex items-start gap-4">
+                  <div class="circle-icon-sm bg-purple-soft">
+                    <svg class="icon text-purple" aria-hidden="true"><use href="#i-phone"></use></svg>
+                  </div>
+                  <div>
+                    <h3 class="mb-1" style="font-weight: 600;">Teléfono</h3>
+                    <a class="text-pink mb-1" style="font-weight: 500;" href="tel:+56944326527">+56 9 44326527</a>
+                    
+                  </div>
+                </div>
+                <div class="flex items-start gap-4">
+                  <div class="circle-icon-sm bg-purple-soft">
+                    <svg class="icon text-purple" aria-hidden="true"><use href="#i-map-pin"></use></svg>
+                  </div>
+                  <div>
+                    <h3 class="mb-1" style="font-weight: 600;">Ubicación</h3>
+                    <p class="text-pink mb-1" style="font-weight: 500;">Insectaria, Biblioteca Comunitaria Ilustrada</p>
+                    <p class="text-soft" style="font-size: 0.875rem;">Juan Martínez de Rozas 1445, Concepción, Bío Bío (Dentro del Liceo Balmaceda para Adultos).</p>
+                  </div>
+                </div>
+                <div class="flex items-start gap-4">
+                  <div class="circle-icon-sm bg-purple-soft">
+                    <svg class="icon text-purple" aria-hidden="true"><use href="#i-calendar"></use></svg>
+                  </div>
+                  <div>
+                    <h3 class="mb-1" style="font-weight: 600;">Horario de Atención</h3>
+                    <p class="text-pink mb-1" style="font-weight: 500;">Miércoles a Viernes</p>
+                    <p class="text-soft" style="font-size: 0.875rem;">15:00 a 18:00 hrs.</p>
+                  </div>
+                </div>
+                </div>
+              </div>
+
+              <div class="map-frame reveal" data-delay="0.2">
+                <iframe title="Mapa de la Biblioteca Insectaria" loading="lazy" src="https://www.openstreetmap.org/export/embed.html?bbox=-73.0455%2C-36.8202%2C-73.0405%2C-36.8172&amp;layer=mapnik&amp;marker=-36.8187%2C-73.0430"></iframe>
+                <p class="text-soft text-center" style="font-size: 0.875rem;">¡Te esperamos!</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+  </main>
+
+  <footer class="footer">
+    <div class="container" style="padding-block: 3rem;">
+      <div class="footer__grid">
+        <div>
+          <a href="index.html" class="flex items-center mb-4" aria-label="Ansiosxs – Nuevas Lecturas, inicio">
+            <img src="images/logo.png" alt="Ansiosxs Nuevas Lecturas" style="height: 2.5rem; width: auto;">
+          </a>
+          <p class="text-soft mb-4" style="max-width: 28rem;">Un laboratorio creativo que explora la lectura más allá del papel. Llevamos las narrativas al territorio, al cuerpo y a lo colectivo, creando un cambio a través del arte.</p>
+          <div class="social">
+            <a href="https://www.instagram.com/ansiosxs" target="_blank" rel="noopener noreferrer" aria-label="Instagram" class="social-instagram"><svg class="icon" aria-hidden="true"><use href="#i-instagram"></use></svg></a>
+            <a href="https://www.facebook.com/Ansiosxs/" target="_blank" rel="noopener noreferrer" aria-label="Facebook" class="social-facebook"><svg class="icon" aria-hidden="true"><use href="#i-facebook"></use></svg></a>
+            <a href="https://www.youtube.com/channel/UCMWvXVIqLlI72pXkdeWM62g" target="_blank" rel="noopener noreferrer" aria-label="YouTube" class="social-youtube"><svg class="icon" aria-hidden="true"><use href="#i-youtube"></use></svg></a>
+            <a href="https://www.linkedin.com/company/ong-ansiosxs-nuevas-lecturas/?viewAsMember=true" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn" class="social-linkedin"><svg class="icon" aria-hidden="true"><use href="#i-linkedin"></use></svg></a>
+            <a href="mailto:ansiosxs@gmail.com" aria-label="Enviar correo" class="social-mail"><svg class="icon" aria-hidden="true"><use href="#i-mail"></use></svg></a>
+          </div>
+        </div>
+
+        <div>
+          <span class="footer__title">Enlaces Rápidos</span>
+          <ul class="footer__list">
+            <li><a href="quienes-somos.html">Quienes Somos</a></li>
+            <li><a href="proyectos.html">Proyectos</a></li>
+            <li><a href="como-colaborar.html">Como Colaborar</a></li>
+            <li><a href="contacto.html">Contacto</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <span class="footer__title">Contacto</span>
+          <ul class="footer__list footer__contact">
+            <li>
+              <svg class="icon icon-sm" aria-hidden="true"><use href="#i-mail"></use></svg>
+              <a href="mailto:ansiosxs@gmail.com">ansiosxs@gmail.com</a>
+            </li>
+            <li>
+              <svg class="icon icon-sm" aria-hidden="true"><use href="#i-phone"></use></svg>
+              <span>+56 9 44326527</span>
+            </li>
+            <li>
+              <svg class="icon icon-sm" aria-hidden="true"><use href="#i-map-pin"></use></svg>
+              <span>Juan Martínez de Rozas 1445, Concepción, Bío Bío</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="footer__bottom">
+        <p>© <span data-year>2025</span> Ansiosxs – Nuevas Lecturas. Todos los derechos reservados.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/icons.js" defer></script>
+  <script src="js/main.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js" defer></script>
+  <script src="js/contact.js" defer></script>
+</body>
+</html>
