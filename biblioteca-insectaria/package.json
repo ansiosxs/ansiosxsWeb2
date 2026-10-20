@@ -15,6 +15,7 @@
         "vite": "^6.0.11"
     },
     "dependencies": {
+        "@zxing/browser": "^0.1.5",
         "alpinejs": "^3.14.9",
         "vue": "^3.5.44"
     }

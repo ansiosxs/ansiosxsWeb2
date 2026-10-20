@@ -152,8 +152,8 @@ function closeBook() {
 
 <template>
     <section class="catalog-search">
-        <label for="catalog-query">Título o autor</label>
-        <div class="search-control"><input id="catalog-query" v-model="query" type="search" placeholder="Ej.: narrativa gráfica"><button class="button" type="button" @click="search">Buscar</button></div>
+        <label for="catalog-query">Título, autor o ISBN</label>
+        <div class="search-control"><input id="catalog-query" v-model="query" type="search" placeholder="Ej.: narrativa gráfica o 978..."><button class="button" type="button" @click="search">Buscar</button></div>
         <label for="catalog-shelf">Filtrar por mueble</label>
         <select id="catalog-shelf" v-model="shelfId">
             <option value="">Todos los muebles</option>

@@ -89,6 +89,10 @@ conserva una copia en
   normalizado, inscripción y renovación anual.
 - Préstamos transaccionales por libro y cantidad, con `lockForUpdate`, plazo
   configurable, límites de unidades por socio, morosidad y UUID idempotente.
+- Búsqueda de libros por título, autor o ISBN; los formularios de préstamos y
+  alta/edición de libros pueden escanear códigos ISBN-13 con la cámara del
+  dispositivo. En móviles, la cámara requiere HTTPS y permiso del navegador
+  (localhost también funciona).
 - Devoluciones parciales por préstamo, días de atraso, lista de morosidad, lista telefónica y
   recordatorios de correo registrados para no repetirlos.
 - Portal público Vue, API de catálogo sin información de socios, anuncios por

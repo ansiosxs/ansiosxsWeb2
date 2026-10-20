@@ -185,6 +185,13 @@ h3 { font-size: 1.05rem; }
 .grid-two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
 .form-stack { display: grid; gap: 1rem; }
 .form-stack label, .search-form label, .catalog-search label { display: grid; gap: .4rem; font-weight: 700; }
+.loan-book-search { display: flex; gap: .65rem; }
+.loan-scan-button { flex: none; }
+.isbn-scanner { display: grid; grid-template-columns: minmax(0, 1fr) minmax(12rem, .6fr); gap: 1rem; align-items: center; padding: 1rem; border: 2px solid #2d2d2d; border-radius: 1rem; background: #f5efff; }
+.isbn-scanner[hidden] { display: none; }
+.isbn-scanner video { width: 100%; max-height: 22rem; border: 2px solid #2d2d2d; border-radius: .75rem; background: #21182b; object-fit: cover; }
+.isbn-scanner-controls { display: grid; justify-items: start; gap: .75rem; }
+.isbn-scanner-controls p { margin: 0; }
 input, select, textarea { width: 100%; min-height: 2.75rem; padding: .6rem .7rem; border: 1.5px solid #8d8494; border-radius: .65rem; background: #fff; color: inherit; }
 textarea { resize: vertical; }
 input:focus, select:focus, textarea:focus, button:focus-visible, a:focus-visible { outline: 3px solid #e9b940; outline-offset: 2px; }
@@ -281,6 +288,10 @@ th { background: #fff0b3; color: var(--purple-dark); font-size: .85rem; }
     .search-control { align-items: stretch; }
     .search-control .button { padding: .5rem .7rem; }
     .inline-form { align-items: stretch; }
+    .loan-book-search { align-items: stretch; flex-direction: column; }
+    .loan-scan-button { width: 100%; }
+    .isbn-scanner { grid-template-columns: 1fr; }
+    .isbn-scanner-controls { justify-items: stretch; }
 }
 }
 

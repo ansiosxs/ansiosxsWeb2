@@ -109,6 +109,19 @@ class BibliotecaTest extends TestCase
         $this->assertDatabaseHas('libros', ['id' => $libro->id, 'deleted_at' => null]);
     }
 
+    public function test_book_form_offers_isbn_scanning(): void
+    {
+        $voluntario = User::factory()->create();
+
+        $this->actingAs($voluntario)->get(route('admin.libros.create'))
+            ->assertOk()
+            ->assertSee('data-isbn-form', false)
+            ->assertSee('data-isbn-escanear', false)
+            ->assertSee('data-isbn-input', false)
+            ->assertSee('data-isbn-video', false)
+            ->assertSee('Escanear ISBN');
+    }
+
     public function test_us02_book_with_loan_history_is_soft_deleted_after_all_units_are_returned(): void
     {
         $voluntario = User::factory()->create();
@@ -206,13 +219,19 @@ class BibliotecaTest extends TestCase
         $book = Libro::create([
             'titulo' => 'La biblioteca secreta',
             'autor' => 'Autora de prueba',
-            'isbn' => '9780000000001',
+            'isbn' => '978-0-000000-00-1',
             'editorial' => 'Insectaria',
             'anio' => 2024,
             'cantidad_total' => 4,
         ]);
         $this->createActiveLoan($this->createMember(), $book, $voluntario, null, 1);
         $this->createBookAndStock('La biblioteca agotada', 0);
+
+        $this->actingAs($voluntario)->get(route('admin.prestamos.index'))
+            ->assertOk()
+            ->assertSee('data-libro-escanear', false)
+            ->assertSee('data-isbn-video', false)
+            ->assertSee('título, autor o ISBN');
 
         $this->actingAs($voluntario)->getJson(route('admin.prestamos.libros', ['q' => 'La biblioteca']))
             ->assertOk()
@@ -221,6 +240,12 @@ class BibliotecaTest extends TestCase
             ->assertJsonPath('0.autor', 'Autora de prueba')
             ->assertJsonPath('0.editorial', 'Insectaria')
             ->assertJsonPath('0.cantidad_disponible', 3);
+
+        $this->getJson(route('admin.prestamos.libros', ['q' => '9780000000001']))
+            ->assertOk()
+            ->assertJsonCount(1)
+            ->assertJsonPath('0.id', $book->id)
+            ->assertJsonPath('0.isbn', '978-0-000000-00-1');
     }
 
     public function test_member_membership_expiration_actions_update_the_due_date(): void
@@ -349,6 +374,18 @@ class BibliotecaTest extends TestCase
         $this->assertStringNotContainsString('Dato privado', $response->getContent());
         $this->getJson('/api/catalogo?pagina=0')->assertStatus(422)
             ->assertJsonStructure(['mensaje', 'errores']);
+    }
+
+    public function test_public_catalog_can_search_by_isbn(): void
+    {
+        $book = $this->createBookAndStock('Libro con ISBN', 2);
+        $book->update(['isbn' => '978-0-000000-12-3']);
+        $this->createBookAndStock('Otro libro', 2);
+
+        $this->getJson('/api/catalogo?q=9780000000123')
+            ->assertOk()
+            ->assertJsonCount(1, 'datos')
+            ->assertJsonPath('datos.0.titulo', 'Libro con ISBN');
     }
 
     public function test_public_catalog_returns_only_one_page_at_a_time_for_incremental_loading(): void

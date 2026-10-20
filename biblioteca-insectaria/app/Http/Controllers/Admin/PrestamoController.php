@@ -38,12 +38,14 @@ class PrestamoController extends Controller
     {
         $datos = $request->validate(['q' => ['required', 'string', 'min:1', 'max:100']]);
         $busqueda = trim($datos['q']);
+        $isbnBusqueda = preg_replace('/[\s.-]+/', '', $busqueda);
 
         $libros = Libro::query()
             ->withUnidadesPrestadas()
             ->where(fn ($query) => $query
                 ->where('titulo', 'like', "%{$busqueda}%")
-                ->orWhere('autor', 'like', "%{$busqueda}%"))
+                ->orWhere('autor', 'like', "%{$busqueda}%")
+                ->orWhereRaw("REPLACE(REPLACE(REPLACE(isbn, '-', ''), ' ', ''), '.', '') LIKE ?", ["%{$isbnBusqueda}%"]))
             ->whereRaw('libros.cantidad_total > (SELECT COALESCE(SUM(p.cantidad - p.cantidad_devuelta), 0) FROM prestamos p WHERE p.libro_id = libros.id AND p.estado = ?)', ['activo'])
             ->limit(10)
             ->get();

@@ -52,6 +52,7 @@ class CatalogoController extends Controller
             'orden' => ['nullable', 'string', Rule::in(['titulo_asc', 'titulo_desc', 'autor_asc', 'autor_desc'])],
         ]);
         $busqueda = trim($validated['q'] ?? '');
+        $isbnBusqueda = preg_replace('/[\s.-]+/', '', $busqueda);
         [$columna, $direccion] = match ($validated['orden'] ?? 'autor_asc') {
             'titulo_desc' => ['titulo', 'desc'],
             'autor_asc' => ['autor', 'asc'],
@@ -65,7 +66,8 @@ class CatalogoController extends Controller
             ->withUnidadesPrestadas()
             ->when($busqueda !== '', fn ($query) => $query->where(fn ($q) => $q
                 ->where('titulo', 'like', "%{$busqueda}%")
-                ->orWhere('autor', 'like', "%{$busqueda}%")))
+                ->orWhere('autor', 'like', "%{$busqueda}%")
+                ->orWhereRaw("REPLACE(REPLACE(REPLACE(isbn, '-', ''), ' ', ''), '.', '') LIKE ?", ["%{$isbnBusqueda}%"])))
             ->when(isset($validated['mueble_id']), fn ($query) => $query->where('mueble_id', $validated['mueble_id']))
             ->orderBy($columna, $direccion)
             ->orderBy('id')

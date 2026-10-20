@@ -5,7 +5,19 @@
 <section class="panel"><h2>Registrar préstamo</h2><p>Busca un título, indica cuántas unidades se lleva el socio y confirma.</p>
     <form class="form-stack" method="post" action="{{ route('admin.prestamos.store') }}" data-resiliente="prestamo" data-libros-url="{{ route('admin.prestamos.libros') }}">
         @csrf
-        <label>Buscar por título o autor<input type="search" autocomplete="off" data-libro-busqueda placeholder="Escribe el título o autor" required></label>
+        <label>Buscar por título, autor o ISBN
+            <span class="loan-book-search">
+                <input type="search" autocomplete="off" inputmode="search" data-libro-busqueda placeholder="Escribe el título, autor o ISBN" required>
+                <button class="button button-secondary loan-scan-button" type="button" data-libro-escanear>Escanear ISBN</button>
+            </span>
+        </label>
+        <section class="isbn-scanner" data-isbn-scanner hidden aria-label="Escáner de ISBN">
+            <video data-isbn-video playsinline muted aria-label="Vista de la cámara para escanear el ISBN"></video>
+            <div class="isbn-scanner-controls">
+                <p class="muted" data-isbn-estado aria-live="polite">Apunta la cámara al código de barras del libro.</p>
+                <button class="button button-secondary" type="button" data-isbn-cancelar>Cancelar escaneo</button>
+            </div>
+        </section>
         <div class="form-stack" data-libro-resultados hidden role="listbox" aria-label="Libros disponibles"></div>
         <p class="muted" data-libro-estado aria-live="polite"></p>
         <input type="hidden" name="libro_id" value="{{ old('libro_id') }}" data-libro-id>
