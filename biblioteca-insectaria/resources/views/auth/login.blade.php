@@ -18,6 +18,7 @@
             <label class="checkbox"><input type="checkbox" name="remember" value="1"> Mantener sesión iniciada</label>
             <button class="button" type="submit">Ingresar</button>
         </form>
+        <p class="mt-4 text-center"><a href="{{ route('password.request') }}" class="text-sm font-semibold text-brand-700 underline">¿Olvidaste tu contraseña?</a></p>
         <a class="auth-back" href="{{ route('catalogo') }}">Volver al catálogo</a>
     </main>
     <img class="auth-mascot" src="{{ asset('mascotas/serpi.png') }}" alt="" aria-hidden="true">

@@ -59,6 +59,8 @@ class LibroController extends Controller
 
     public function destroy(Libro $libro): RedirectResponse
     {
+        abort_unless(auth()->user()?->isAdmin(), 403);
+
         if ($libro->prestamos()->where('estado', 'activo')->exists()) {
             return back()->withErrors(['libro' => 'No se puede dar de baja: el libro tiene unidades prestadas. Registra primero la devolución.']);
         }

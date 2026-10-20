@@ -23,6 +23,8 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'role',
+        'activo',
     ];
 
     /**
@@ -45,7 +47,22 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'activo' => 'boolean',
+            'role' => 'string',
         ];
+    }
+
+    public const ROLE_ADMIN = 'admin';
+    public const ROLE_VOLUNTARIO = 'voluntario';
+
+    public function isAdmin(): bool
+    {
+        return $this->role === self::ROLE_ADMIN;
+    }
+
+    public function isVolunteer(): bool
+    {
+        return $this->role === self::ROLE_VOLUNTARIO;
     }
 
     public function prestamosRegistrados(): HasMany
@@ -56,5 +73,15 @@ class User extends Authenticatable
     public function sociosRegistrados(): HasMany
     {
         return $this->hasMany(Socio::class);
+    }
+
+    public function actionLogs(): HasMany
+    {
+        return $this->hasMany(UserActionLog::class, 'user_id');
+    }
+
+    public function actorLogs(): HasMany
+    {
+        return $this->hasMany(UserActionLog::class, 'actor_id');
     }
 }

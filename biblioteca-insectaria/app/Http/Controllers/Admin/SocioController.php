@@ -69,6 +69,8 @@ class SocioController extends Controller
 
     public function destroy(Socio $socio): RedirectResponse
     {
+        abort_unless(auth()->user()?->isAdmin(), 403);
+
         $socio->update(['activo' => false]);
 
         return redirect()->route('admin.socios.index')->with('status', 'Socio desactivado. Se conservó su historial.');

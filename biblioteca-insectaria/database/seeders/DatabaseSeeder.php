@@ -19,7 +19,12 @@ class DatabaseSeeder extends Seeder
         if ($email && $password) {
             User::query()->firstOrCreate(
                 ['email' => $email],
-                ['name' => env('BIBLIOTECA_ADMIN_NOMBRE', 'Voluntariado'), 'password' => $password]
+                [
+                    'name' => env('BIBLIOTECA_ADMIN_NOMBRE', 'Voluntariado'),
+                    'password' => $password,
+                    'role' => User::ROLE_ADMIN,
+                    'activo' => true,
+                ]
             );
         }
     }

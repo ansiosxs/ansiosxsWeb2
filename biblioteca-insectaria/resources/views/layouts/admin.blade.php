@@ -73,6 +73,16 @@
                             <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 19.5V12m5 7.5V5m5 14.5v-10m5 10V8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
                             <span>Estadísticas</span>
                         </a>
+                        @if (auth()->user()->isAdmin())
+                            <a href="{{ route('admin.usuarios.index') }}" @class(['admin-nav-link', 'is-active' => request()->routeIs('admin.usuarios.*')]) @click="sidebarOpen = false">
+                                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M16 20.25v-1.5a3.75 3.75 0 0 0-3.75-3.75h-5.5A3.75 3.75 0 0 0 3 18.75v1.5m14-13.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm4 13.5v-1.5a3.75 3.75 0 0 0-3-3.675M15 3.2a3 3 0 0 1 0 5.85" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                <span>Usuarios</span>
+                            </a>
+                            <a href="{{ route('admin.logs.index') }}" @class(['admin-nav-link', 'is-active' => request()->routeIs('admin.logs.*')]) @click="sidebarOpen = false">
+                                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M7.5 4.5h9a2.25 2.25 0 0 1 2.25 2.25v11.25A2.25 2.25 0 0 1 16.5 20.25h-9A2.25 2.25 0 0 1 5.25 18V6.75A2.25 2.25 0 0 1 7.5 4.5Zm0 5.25h9m-9 3.75h6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+                                <span>Bitácora</span>
+                            </a>
+                        @endif
                     </div>
                 </div>
             </nav>
@@ -98,7 +108,7 @@
                 <div class="flex shrink-0 items-center gap-3">
                     <span class="hidden text-right sm:block">
                         <span class="block text-sm font-bold text-[#35234f]">{{ auth()->user()->name }}</span>
-                        <span class="block text-xs text-[#716c77]">Voluntariado</span>
+                        <span class="block text-xs text-[#716c77]">{{ auth()->user()->isAdmin() ? 'Administrador' : 'Voluntario' }}</span>
                     </span>
                     <form method="post" action="{{ route('logout') }}">@csrf
                         <button class="button button-secondary admin-logout" type="submit">Cerrar sesión</button>

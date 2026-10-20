@@ -47,6 +47,10 @@ class BibliotecaTest extends TestCase
         $this->post('/login', ['login' => $user->name, 'password' => 'ClaveSegura123!'])
             ->assertRedirect(route('admin.dashboard'));
         $this->assertAuthenticatedAs($user);
+        $this->assertDatabaseHas('user_action_logs', [
+            'user_id' => $user->id,
+            'action' => 'POST login.store',
+        ]);
 
         $this->post('/logout');
         $this->post('/login', ['login' => $user->email, 'password' => 'ClaveSegura123!'])
@@ -92,7 +96,25 @@ class BibliotecaTest extends TestCase
         $this->assertDatabaseMissing('users', ['email' => 'ada@example.cl']);
     }
 
-    public function test_us02_book_requires_title_and_block_deactivation_while_loan_is_active(): void
+    public function test_admin_cannot_delete_user_with_history_and_is_told_to_deactivate_instead(): void
+    {
+        $admin = User::factory()->create(['role' => User::ROLE_ADMIN]);
+        $voluntario = User::factory()->create();
+        $socio = $this->createMember();
+        $libro = $this->createBookAndStock('Libro con historial de usuario');
+        $this->createActiveLoan($socio, $libro, $voluntario);
+
+        $this->actingAs($admin)
+            ->from(route('admin.usuarios.index'))
+            ->delete(route('admin.usuarios.destroy', $voluntario))
+            ->assertRedirect(route('admin.usuarios.index'))
+            ->assertSessionHasErrors('usuario');
+
+        $this->assertDatabaseHas('users', ['id' => $voluntario->id, 'activo' => true]);
+        $this->assertDatabaseHas('prestamos', ['user_id' => $voluntario->id]);
+    }
+
+    public function test_volunteer_cannot_delete_books_and_admin_cannot_delete_while_loan_is_active(): void
     {
         $voluntario = User::factory()->create();
         $this->actingAs($voluntario)->from('/admin/libros/create')
@@ -105,6 +127,12 @@ class BibliotecaTest extends TestCase
         $this->createActiveLoan($socio, $libro, $voluntario);
 
         $this->actingAs($voluntario)->delete(route('admin.libros.destroy', $libro))
+            ->assertForbidden();
+        $this->assertDatabaseHas('libros', ['id' => $libro->id, 'deleted_at' => null]);
+
+        $administrador = User::factory()->create(['role' => User::ROLE_ADMIN]);
+        $this->actingAs($administrador)->from(route('admin.libros.show', $libro))
+            ->delete(route('admin.libros.destroy', $libro))
             ->assertSessionHasErrors('libro');
         $this->assertDatabaseHas('libros', ['id' => $libro->id, 'deleted_at' => null]);
     }
@@ -135,9 +163,97 @@ class BibliotecaTest extends TestCase
         ]);
         $this->travelTo(now()->addDay());
 
-        $this->actingAs($voluntario)->delete(route('admin.libros.destroy', $libro))
+        $administrador = User::factory()->create(['role' => User::ROLE_ADMIN]);
+        $this->actingAs($administrador)->delete(route('admin.libros.destroy', $libro))
             ->assertRedirect(route('admin.libros.index'));
         $this->assertSoftDeleted('libros', ['id' => $libro->id]);
+    }
+
+    public function test_volunteer_cannot_manage_users_delete_members_or_change_announcements_and_shelves(): void
+    {
+        $voluntario = User::factory()->create();
+        $socio = $this->createMember();
+        $libro = $this->createBookAndStock('Libro protegido');
+        $mueble = Mueble::create(['nombre' => 'Estantería protegida']);
+        $anuncio = Anuncio::create([
+            'titulo' => 'Anuncio protegido',
+            'cuerpo' => 'Contenido',
+            'publicar_desde' => today(),
+            'user_id' => $voluntario->id,
+        ]);
+
+        $this->actingAs($voluntario)
+            ->get(route('admin.usuarios.index'))
+            ->assertForbidden();
+        $this->get(route('admin.logs.index'))->assertForbidden();
+        $this->delete(route('admin.libros.destroy', $libro))->assertForbidden();
+        $this->delete(route('admin.socios.destroy', $socio))->assertForbidden();
+        $this->get(route('admin.anuncios.create'))->assertForbidden();
+        $this->post(route('admin.anuncios.store'), [
+            'titulo' => 'Intento voluntario',
+            'cuerpo' => 'Contenido',
+            'publicar_desde' => today()->format('Y-m-d'),
+        ])->assertForbidden();
+        $this->put(route('admin.anuncios.update', $anuncio), [
+            'titulo' => 'Modificación voluntaria',
+            'cuerpo' => 'Contenido',
+            'publicar_desde' => today()->format('Y-m-d'),
+        ])->assertForbidden();
+        $this->delete(route('admin.anuncios.destroy', $anuncio))->assertForbidden();
+        $this->post(route('admin.estanterias.store'), ['nombre' => 'Nueva estantería'])->assertForbidden();
+        $this->put(route('admin.estanterias.update', $mueble), ['nombre' => 'Modificación voluntaria'])->assertForbidden();
+        $this->delete(route('admin.muebles.destroy', $mueble))->assertForbidden();
+
+        $this->assertDatabaseHas('socios', ['id' => $socio->id, 'activo' => true]);
+        $this->assertDatabaseHas('libros', ['id' => $libro->id, 'deleted_at' => null]);
+        $this->assertDatabaseHas('anuncios', ['id' => $anuncio->id, 'titulo' => 'Anuncio protegido']);
+        $this->assertDatabaseHas('muebles', ['id' => $mueble->id, 'nombre' => 'Estantería protegida']);
+        $this->assertDatabaseMissing('muebles', ['nombre' => 'Nueva estantería']);
+    }
+
+    public function test_volunteer_activity_log_records_reads_without_storing_search_values(): void
+    {
+        $voluntario = User::factory()->create();
+        $search = 'dato-personal-que-no-debe-guardarse';
+
+        $this->actingAs($voluntario)
+            ->get(route('admin.socios.index', ['q' => $search]))
+            ->assertOk();
+
+        $log = \Illuminate\Support\Facades\DB::table('user_action_logs')->latest('id')->first();
+        $this->assertNotNull($log);
+        $this->assertSame($voluntario->id, $log->user_id);
+        $this->assertSame('GET admin.socios.index', $log->action);
+        $this->assertStringNotContainsString($search, $log->details);
+        $this->assertContains('q', json_decode($log->details, true)['query_keys']);
+
+        $this->post(route('logout'))->assertRedirect(route('login'));
+        $this->assertDatabaseHas('user_action_logs', [
+            'user_id' => $voluntario->id,
+            'action' => 'POST logout',
+        ]);
+    }
+
+    public function test_last_active_admin_cannot_be_demoted_or_deactivated(): void
+    {
+        $admin = User::factory()->create(['role' => User::ROLE_ADMIN]);
+
+        $this->actingAs($admin)
+            ->from(route('admin.usuarios.edit', $admin))
+            ->put(route('admin.usuarios.update', $admin), [
+                'name' => $admin->name,
+                'email' => $admin->email,
+                'role' => User::ROLE_VOLUNTARIO,
+                'activo' => false,
+            ])
+            ->assertRedirect(route('admin.usuarios.edit', $admin))
+            ->assertSessionHasErrors('usuario');
+
+        $this->assertDatabaseHas('users', [
+            'id' => $admin->id,
+            'role' => User::ROLE_ADMIN,
+            'activo' => true,
+        ]);
     }
 
     public function test_us03_book_inventory_is_required_and_cannot_be_reduced_below_loans(): void
@@ -574,13 +690,14 @@ class BibliotecaTest extends TestCase
             route('admin.prestamos.index'),
             route('admin.morosidad'),
             route('admin.anuncios.index'),
-            route('admin.anuncios.create'),
-            route('admin.anuncios.edit', Anuncio::first()),
             route('admin.muebles.index'),
             route('admin.estanterias.index'),
         ] as $url) {
             $this->get($url)->assertOk();
         }
+
+        $this->get(route('admin.anuncios.create'))->assertForbidden();
+        $this->get(route('admin.anuncios.edit', Anuncio::first()))->assertForbidden();
     }
 
     public function test_dashboard_can_select_only_years_with_loans(): void
