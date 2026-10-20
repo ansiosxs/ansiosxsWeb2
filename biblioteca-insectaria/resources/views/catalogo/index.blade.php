@@ -8,12 +8,16 @@
 </head>
 <body class="public-page">
     <header class="public-header">
-        <div class="public-header-inner"><a class="brand" href="{{ route('catalogo') }}">Biblioteca Comunitaria Insectaria</a>
+        <div class="public-header-inner"><a class="public-brand" href="{{ route('catalogo') }}" aria-label="Biblioteca Comunitaria Insectaria, inicio"><img src="{{ asset('logo.png') }}" alt="Ansiosxs Nuevas Lecturas"></a>
             <a href="{{ auth()->check() ? route('admin.dashboard') : route('login') }}">Acceso voluntariado</a>
         </div>
     </header>
     <main class="catalog-main">
-        <section class="catalog-intro"><p class="eyebrow">Concepción, Chile</p><h1>Explora nuestro catálogo</h1><p>Busca libros y revisa su disponibilidad antes de visitarnos.</p></section>
+        <section class="catalog-intro">
+            <img class="catalog-mascot catalog-mascot--left" src="{{ asset('mascotas/bicho.png') }}" alt="" aria-hidden="true">
+            <div><p class="eyebrow">Concepción, Chile</p><h1>Explora nuestro catálogo</h1><p>Busca libros y revisa su disponibilidad antes de visitarnos.</p></div>
+            <img class="catalog-mascot catalog-mascot--right" src="{{ asset('mascotas/ave.png') }}" alt="" aria-hidden="true">
+        </section>
         @if ($anuncios->isNotEmpty())
             <section class="announcements" aria-label="Anuncios">
                 @foreach ($anuncios as $anuncio)<article class="announcement"><h2>{{ $anuncio->titulo }}</h2><p>{{ $anuncio->cuerpo }}</p></article>@endforeach

@@ -14,7 +14,7 @@
             :class="{ 'is-open': sidebarOpen }" aria-label="Navegación del panel">
             <div class="flex min-h-[88px] items-center justify-between border-b border-[#e7e0d8] px-5">
                 <a href="{{ route('admin.dashboard') }}" class="flex min-w-0 items-center gap-3">
-                    <span class="grid size-11 place-items-center rounded-2xl bg-brand-50 text-xl text-brand-700" aria-hidden="true">✿</span>
+                    <img class="admin-brand-logo" src="{{ asset('logocircular.png') }}" alt="">
                     <span class="min-w-0">
                         <span class="block font-display text-lg font-bold leading-tight text-brand-900">Biblioteca</span>
                         <span class="block text-sm font-semibold text-[#716c77]">Insectaria</span>
@@ -85,7 +85,7 @@
         </aside>
 
         <div class="min-w-0 flex-1 xl:ml-[270px]">
-            <header class="sticky top-0 z-30 flex min-h-[76px] items-center justify-between gap-3 border-b border-[#e7e0d8] bg-white/95 px-4 backdrop-blur sm:px-6 xl:px-8">
+            <header class="admin-topbar sticky top-0 z-30 flex min-h-[76px] items-center justify-between gap-3 border-b border-[#e7e0d8] bg-white/95 px-4 backdrop-blur sm:px-6 xl:px-8">
                 <div class="flex min-w-0 items-center gap-3">
                     <button type="button" class="admin-menu-toggle xl:hidden" @click="sidebarOpen = !sidebarOpen" :aria-expanded="sidebarOpen" aria-controls="admin-sidebar" :aria-label="sidebarOpen ? 'Cerrar menú' : 'Abrir menú'">
                         <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>

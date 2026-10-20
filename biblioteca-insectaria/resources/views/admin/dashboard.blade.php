@@ -1,7 +1,10 @@
 @extends('layouts.admin')
 @section('title', 'Resumen')
 @section('content')
-<div class="page-heading"><div><p class="eyebrow">Panel de gestión</p><h2 class="font-display text-2xl font-bold text-[#35234f] sm:text-3xl">Resumen de la biblioteca</h2><p class="muted mb-0">Estado actual y accesos rápidos para el equipo.</p></div></div>
+<section class="dashboard-hero sticker-card">
+    <div><p class="eyebrow">Panel de gestión</p><h2>¡Hola, {{ auth()->user()->name }}!</h2><p>Este es el resumen de la biblioteca. Gracias por ayudar a que cada historia encuentre nuevas lectoras y lectores.</p></div>
+    <img class="dashboard-mascot" src="{{ asset('mascotas/lobo.png') }}" alt="" aria-hidden="true">
+</section>
 <div class="stats-grid">
     <article class="stat-card"><span class="font-semibold text-[#716c77]">Socios con membresía vigente</span><strong>{{ $sociosActivos }}</strong><span class="text-sm text-[#716c77]">Membresías activas</span></article>
     <article class="stat-card"><span class="font-semibold text-[#716c77]">Unidades vencidas</span><strong class="text-[#a62837]">{{ $morosos }}</strong><a class="font-bold" href="{{ route('admin.morosidad') }}">Revisar morosidad <span aria-hidden="true">→</span></a></article>
