@@ -51,8 +51,8 @@ La migración más reciente consolida los ejemplares en una cantidad por libro y
 elimina la identificación individual; aplica `php artisan migrate --force` al
 actualizar una instalación existente.
 
-Abre `http://127.0.0.1:8001/login` e ingresa con la cuenta creada. Las pruebas
-automatizadas usan SQLite en memoria:
+Abre `http://127.0.0.1:8001/login` e ingresa con el nombre o correo y la
+contraseña de la cuenta creada. Las pruebas automatizadas usan SQLite en memoria:
 
 ```powershell
 php artisan test
@@ -183,8 +183,19 @@ php artisan biblioteca:importar-catalogo C:\ruta\inventario.csv
 
 El comando admite CSV separado por coma o punto y coma, acumula existencias por
 libro y escribe un informe CSV de filas rechazadas en
-`storage/app/importacion-informe.csv`. Resuelve todas las filas del informe
-antes de retirar el Excel/cuaderno original.
+`storage/app/importacion-informe.csv`. También reconoce los encabezados del
+inventario `ID,ISBN,Título,Autor,Editorial,Cantidad,URL Imagen`; las filas sin
+título o autor quedan en el informe porque esos campos son obligatorios en la
+base de datos. Para importar ese inventario y asignar todos los libros
+existentes e importados al mueble `Plan Lector`, ejecuta desde esta carpeta:
+
+```powershell
+php artisan biblioteca:importar-catalogo "..\book_inventory.csv" --mueble="Plan Lector"
+```
+
+El comando acumula cantidades: ejecútalo una sola vez para cada inventario, o
+revisa las cantidades antes de volver a importarlo. Resuelve todas las filas
+del informe antes de retirar el Excel/cuaderno original.
 
 ## Rutas útiles
 

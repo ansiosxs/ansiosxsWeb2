@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Mail\RecordatorioVencimiento;
 use App\Models\Anuncio;
 use App\Models\Libro;
+use App\Models\Mueble;
 use App\Models\Prestamo;
 use App\Models\Socio;
 use App\Models\User;
@@ -29,9 +30,27 @@ class BibliotecaTest extends TestCase
         $this->get(route('login'))->assertOk();
 
         $user = User::factory()->create(['email' => 'voluntaria@example.cl', 'password' => 'ClaveSegura123!']);
-        $this->post('/login', ['email' => $user->email, 'password' => 'ClaveSegura123!'])
+        $this->post('/login', ['login' => $user->email, 'password' => 'ClaveSegura123!'])
             ->assertRedirect(route('admin.dashboard'));
 
+        $this->assertAuthenticatedAs($user);
+    }
+
+    public function test_volunteer_can_log_in_with_name_or_email(): void
+    {
+        $user = User::factory()->create([
+            'name' => 'Camila Voluntaria',
+            'email' => 'camila@example.cl',
+            'password' => 'ClaveSegura123!',
+        ]);
+
+        $this->post('/login', ['login' => $user->name, 'password' => 'ClaveSegura123!'])
+            ->assertRedirect(route('admin.dashboard'));
+        $this->assertAuthenticatedAs($user);
+
+        $this->post('/logout');
+        $this->post('/login', ['login' => $user->email, 'password' => 'ClaveSegura123!'])
+            ->assertRedirect(route('admin.dashboard'));
         $this->assertAuthenticatedAs($user);
     }
 
@@ -52,12 +71,12 @@ class BibliotecaTest extends TestCase
     public function test_us01_login_errors_are_generic_and_attempts_are_limited(): void
     {
         for ($attempt = 0; $attempt < 5; $attempt++) {
-            $this->from('/login')->post('/login', ['email' => 'alguien@example.cl', 'password' => 'incorrecta'])
-                ->assertSessionHasErrors(['email' => 'Las credenciales ingresadas no son correctas.']);
+            $this->from('/login')->post('/login', ['login' => 'alguien@example.cl', 'password' => 'incorrecta'])
+                ->assertSessionHasErrors(['login' => 'Las credenciales ingresadas no son correctas.']);
         }
 
-        $this->from('/login')->post('/login', ['email' => 'alguien@example.cl', 'password' => 'incorrecta'])
-            ->assertSessionHasErrors(['email' => 'Demasiados intentos. Intenta nuevamente en un minuto.']);
+        $this->from('/login')->post('/login', ['login' => 'alguien@example.cl', 'password' => 'incorrecta'])
+            ->assertSessionHasErrors(['login' => 'Demasiados intentos. Intenta nuevamente en un minuto.']);
     }
 
     public function test_volunteer_command_can_generate_phpmyadmin_sql_without_creating_local_account(): void
@@ -332,6 +351,115 @@ class BibliotecaTest extends TestCase
             ->assertJsonStructure(['mensaje', 'errores']);
     }
 
+    public function test_public_catalog_returns_only_one_page_at_a_time_for_incremental_loading(): void
+    {
+        for ($number = 1; $number <= 13; $number++) {
+            $this->createBookAndStock(sprintf('Libro %02d', $number));
+        }
+
+        $firstPage = $this->getJson('/api/catalogo')
+            ->assertOk()
+            ->assertJsonPath('pagina', 1)
+            ->assertJsonPath('total_paginas', 2)
+            ->assertJsonCount(12, 'datos');
+
+        $secondPage = $this->getJson('/api/catalogo?pagina=2')
+            ->assertOk()
+            ->assertJsonPath('pagina', 2)
+            ->assertJsonPath('total_paginas', 2)
+            ->assertJsonCount(1, 'datos')
+            ->assertJsonPath('datos.0.titulo', 'Libro 13');
+
+        $firstPageIds = array_column($firstPage->json('datos'), 'id');
+        $secondPageIds = array_column($secondPage->json('datos'), 'id');
+        $this->assertSame([], array_intersect($firstPageIds, $secondPageIds));
+    }
+
+    public function test_public_catalog_dashboard_shows_available_units_and_distinct_titles(): void
+    {
+        $firstBook = $this->createBookAndStock('Primer título', 5);
+        $this->createBookAndStock('Segundo título', 4);
+        $deletedBook = $this->createBookAndStock('Título eliminado', 20);
+        $deletedBook->delete();
+
+        $prestamo = $this->createActiveLoan($this->createMember(), $firstBook, User::factory()->create(), null, 3);
+        $prestamo->update(['cantidad_devuelta' => 1]);
+
+        $this->get('/')
+            ->assertOk()
+            ->assertSee('Ejemplares disponibles')
+            ->assertSee('Títulos en catálogo')
+            ->assertSee('7')
+            ->assertSee('2');
+    }
+
+    public function test_public_catalog_can_filter_books_by_furniture(): void
+    {
+        $prosa = Mueble::create(['nombre' => 'Novela en Prosa']);
+        $grafica = Mueble::create(['nombre' => 'Novela Gráfica']);
+        $prosaBook = $this->createBookAndStock('Libro en prosa');
+        $prosaBook->update(['mueble_id' => $prosa->id]);
+        $graphicBook = $this->createBookAndStock('Libro gráfico');
+        $graphicBook->update(['mueble_id' => $grafica->id]);
+        $this->createBookAndStock('Sin mueble');
+
+        $this->getJson('/api/catalogo?mueble_id='.$prosa->id)
+            ->assertOk()
+            ->assertJsonPath('total_paginas', 1)
+            ->assertJsonCount(1, 'datos')
+            ->assertJsonPath('datos.0.titulo', 'Libro en prosa')
+            ->assertJsonPath('datos.0.mueble', 'Novela en Prosa');
+
+        $this->getJson('/api/catalogo?mueble_id='.$grafica->id)
+            ->assertOk()
+            ->assertJsonPath('datos.0.titulo', 'Libro gráfico');
+
+        $this->getJson('/api/catalogo?mueble_id=999')
+            ->assertStatus(422)
+            ->assertJsonStructure(['mensaje', 'errores']);
+
+        $this->get('/')
+            ->assertOk()
+            ->assertSee('Novela en Prosa')
+            ->assertSee('Novela Gráfica');
+    }
+
+    public function test_public_catalog_can_sort_by_title_or_author_in_both_directions(): void
+    {
+        $this->createCatalogBook('Zeta', 'Ana');
+        $this->createCatalogBook('Beta', 'Zoe');
+        $this->createCatalogBook('Alfa', 'Luis');
+
+        $this->getJson('/api/catalogo')
+            ->assertOk()
+            ->assertJsonPath('datos.0.autor', 'Ana')
+            ->assertJsonPath('datos.2.autor', 'Zoe');
+
+        $this->getJson('/api/catalogo?orden=titulo_asc')
+            ->assertOk()
+            ->assertJsonPath('datos.0.titulo', 'Alfa')
+            ->assertJsonPath('datos.2.titulo', 'Zeta');
+
+        $this->getJson('/api/catalogo?orden=titulo_desc')
+            ->assertOk()
+            ->assertJsonPath('datos.0.titulo', 'Zeta')
+            ->assertJsonPath('datos.2.titulo', 'Alfa');
+
+        $this->getJson('/api/catalogo?orden=autor_asc')
+            ->assertOk()
+            ->assertJsonPath('datos.0.autor', 'Ana')
+            ->assertJsonPath('datos.2.autor', 'Zoe');
+
+        $this->getJson('/api/catalogo?orden=autor_desc')
+            ->assertOk()
+            ->assertJsonPath('datos.0.autor', 'Zoe')
+            ->assertJsonPath('datos.2.autor', 'Ana');
+
+        $this->getJson('/api/catalogo?orden=columna_privada')
+            ->assertStatus(422)
+            ->assertJsonStructure(['mensaje', 'errores']);
+    }
+
     public function test_us09_announcements_are_public_only_during_their_date_window(): void
     {
         $user = User::factory()->create();
@@ -384,7 +512,7 @@ class BibliotecaTest extends TestCase
         $this->actingAs($voluntario);
         $this->get(route('admin.dashboard'))
             ->assertOk()
-            ->assertSee('Últimos 12 meses')
+            ->assertSee('Unidades prestadas por mes')
             ->assertSee('Vistas')
             ->assertSee('2026-10');
         $this->get(route('admin.prestamos.index'))
@@ -418,6 +546,48 @@ class BibliotecaTest extends TestCase
         }
     }
 
+    public function test_dashboard_can_select_only_years_with_loans(): void
+    {
+        $voluntario = User::factory()->create();
+        $socio = $this->createMember();
+        $libro = $this->createBookAndStock('Préstamos por año', 5);
+        $loan2024 = $this->createActiveLoan($socio, $libro, $voluntario, null, 2);
+        $loan2024->update(['fecha_prestamo' => '2024-03-15 10:00:00']);
+        $loan2026 = $this->createActiveLoan($socio, $libro, $voluntario);
+        $loan2026->update(['fecha_prestamo' => '2026-10-10 10:00:00']);
+
+        $this->actingAs($voluntario)->get(route('admin.estadisticas', ['year' => 2024]))
+            ->assertOk()
+            ->assertSee('<option value="2024" selected>', false)
+            ->assertSee('<option value="2026" >', false)
+            ->assertDontSee('value="2025"', false)
+            ->assertSee('2024-03: 2 unidades prestadas')
+            ->assertDontSee('2026-10: 1 unidades prestadas');
+
+        $this->get(route('admin.estadisticas', ['year' => 2025]))->assertSessionHasErrors('year');
+    }
+
+    public function test_dashboard_detail_lists_all_books_by_units_borrowed_descending(): void
+    {
+        $voluntario = User::factory()->create();
+        $socio = $this->createMember();
+
+        for ($quantity = 1; $quantity <= 6; $quantity++) {
+            $book = $this->createBookAndStock('Libro '.$quantity, $quantity);
+            $this->createActiveLoan($socio, $book, $voluntario, null, $quantity);
+        }
+
+        $this->actingAs($voluntario)->get(route('admin.dashboard'))
+            ->assertOk()
+            ->assertSee(route('admin.estadisticas.libros-mas-prestados'), false);
+
+        $this->get(route('admin.estadisticas.libros-mas-prestados'))
+            ->assertOk()
+            ->assertSee('Libro 6')
+            ->assertSee('Libro 1')
+            ->assertSeeInOrder(['Libro 6', 'Libro 5', 'Libro 4', 'Libro 3', 'Libro 2', 'Libro 1']);
+    }
+
     public function test_catalog_import_handles_excel_csv_and_reports_rejected_rows(): void
     {
         $csv = tempnam(sys_get_temp_dir(), 'insectaria-csv-');
@@ -443,6 +613,15 @@ class BibliotecaTest extends TestCase
             'titulo' => $title,
             'autor' => 'Autora de prueba',
             'cantidad_total' => $quantity,
+        ]);
+    }
+
+    private function createCatalogBook(string $title, string $author): Libro
+    {
+        return Libro::create([
+            'titulo' => $title,
+            'autor' => $author,
+            'cantidad_total' => 1,
         ]);
     }
 

@@ -19,7 +19,11 @@
                 @foreach ($anuncios as $anuncio)<article class="announcement"><h2>{{ $anuncio->titulo }}</h2><p>{{ $anuncio->cuerpo }}</p></article>@endforeach
             </section>
         @endif
-        <div id="catalog-app" aria-live="polite"></div>
+        <section class="stats-grid catalog-stats" aria-label="Resumen del catálogo">
+            <article class="stat-card"><span class="font-semibold text-[#716c77]">Ejemplares disponibles</span><strong>{{ number_format($unidadesDisponibles, 0, ',', '.') }}</strong><span class="text-sm text-[#716c77]">Unidades disponibles para préstamo</span></article>
+            <article class="stat-card"><span class="font-semibold text-[#716c77]">Títulos en catálogo</span><strong>{{ number_format($titulosCatalogo, 0, ',', '.') }}</strong><span class="text-sm text-[#716c77]">Libros registrados, sin contar ejemplares</span></article>
+        </section>
+        <div id="catalog-app" data-muebles="{{ $muebles->toJson(JSON_UNESCAPED_UNICODE) }}" aria-live="polite"></div>
     </main>
     <footer class="public-footer">Biblioteca Comunitaria Insectaria · Los datos de disponibilidad pueden cambiar durante el día.</footer>
     <script>if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch((error) => console.error('No se pudo registrar el caché del catálogo:', error)));</script>

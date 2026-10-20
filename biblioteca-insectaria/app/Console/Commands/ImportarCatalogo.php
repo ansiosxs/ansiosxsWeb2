@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Validator;
 
 class ImportarCatalogo extends Command
 {
-    protected $signature = 'biblioteca:importar-catalogo {archivo : CSV exportado desde Excel} {--reporte=storage/app/importacion-informe.csv : Ruta del informe de filas rechazadas}';
+    protected $signature = 'biblioteca:importar-catalogo {archivo : CSV exportado desde Excel} {--reporte=storage/app/importacion-informe.csv : Ruta del informe de filas rechazadas} {--mueble= : Asigna todos los libros al mueble indicado}';
 
     protected $description = 'Importa libros y cantidades de inventario desde un CSV exportado desde Excel.';
 
@@ -36,13 +36,23 @@ class ImportarCatalogo extends Command
             return self::FAILURE;
         }
 
-        $headers = array_map(fn ($header) => mb_strtolower(trim((string) $header)), $headers);
-        $headers[0] = preg_replace('/^\xEF\xBB\xBF/', '', $headers[0]);
+        $headers = array_map(function ($header): string {
+            $header = preg_replace('/^\xEF\xBB\xBF/', '', (string) $header);
+
+            return mb_strtolower(trim($header));
+        }, $headers);
+        $aliases = [
+            'título' => 'titulo',
+            'url imagen' => 'portada_url',
+        ];
+        $headers = array_map(fn ($header) => $aliases[$header] ?? $header, $headers);
         if (array_diff(['titulo', 'autor'], $headers)) {
             $this->error('El CSV debe incluir las columnas titulo y autor.');
 
             return self::FAILURE;
         }
+
+        $defaultShelf = trim((string) $this->option('mueble'));
 
         $reportPath = $this->option('reporte');
         $directory = dirname($reportPath);
@@ -68,6 +78,13 @@ class ImportarCatalogo extends Command
         $rejected = 0;
         $imported = 0;
         $line = 1;
+
+        if ($defaultShelf !== '') {
+            DB::transaction(function () use ($defaultShelf): void {
+                $mueble = Mueble::query()->firstOrCreate(['nombre' => $defaultShelf]);
+                Libro::query()->update(['mueble_id' => $mueble->id]);
+            });
+        }
 
         while (! $file->eof()) {
             $values = $file->fgetcsv($delimiter);
@@ -101,9 +118,10 @@ class ImportarCatalogo extends Command
                 continue;
             }
 
-            DB::transaction(function () use ($row, &$imported): void {
-                $mueble = ! empty($row['mueble'])
-                    ? Mueble::query()->firstOrCreate(['nombre' => $row['mueble']])
+            DB::transaction(function () use ($row, $defaultShelf, &$imported): void {
+                $muebleNombre = $defaultShelf !== '' ? $defaultShelf : ($row['mueble'] ?? null);
+                $mueble = ! empty($muebleNombre)
+                    ? Mueble::query()->firstOrCreate(['nombre' => $muebleNombre])
                     : null;
                 $libro = Libro::query()
                     ->where('titulo', $row['titulo'])
@@ -122,6 +140,8 @@ class ImportarCatalogo extends Command
                         'mueble_id' => $mueble?->id,
                         'cantidad_total' => 0,
                     ]);
+                } elseif ($mueble && $libro->mueble_id !== $mueble->id) {
+                    $libro->update(['mueble_id' => $mueble->id]);
                 }
 
                 $libro->increment('cantidad_total', (int) $row['cantidad']);

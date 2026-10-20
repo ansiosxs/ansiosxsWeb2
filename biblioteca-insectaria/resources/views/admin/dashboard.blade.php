@@ -8,8 +8,21 @@
     <article class="stat-card"><span class="font-semibold text-[#716c77]">Unidades prestadas</span><strong>{{ $prestamosActivos }}</strong><a class="font-bold" href="{{ route('admin.prestamos.index') }}">Gestionar préstamos <span aria-hidden="true">→</span></a></article>
 </div>
 <section class="panel"><h2 class="font-display font-bold text-[#35234f]">Unidades prestadas por mes</h2>
-    <p class="muted">Últimos 12 meses · total de unidades entregadas</p>
-    <div class="flex h-56 items-end gap-2 border-b border-[#e7e0d8] px-2 pt-4" role="img" aria-label="Gráfico de barras de préstamos por mes en los últimos 12 meses">
+    <div class="mb-4 flex flex-wrap items-end justify-between gap-3">
+        <p class="muted mb-0">Total de unidades entregadas en cada mes del año</p>
+        @if ($aniosDisponibles->isNotEmpty())
+            <form method="get" action="{{ route('admin.estadisticas') }}" class="inline-form">
+                <label for="year" class="font-semibold">Año</label>
+                <select id="year" name="year" onchange="this.form.submit()">
+                    @foreach ($aniosDisponibles as $anio)
+                        <option value="{{ $anio }}" @selected($anioSeleccionado === $anio)>{{ $anio }}</option>
+                    @endforeach
+                </select>
+                <button class="button button-secondary" type="submit">Ver</button>
+            </form>
+        @endif
+    </div>
+    <div class="flex h-56 items-end gap-2 border-b border-[#e7e0d8] px-2 pt-4" role="img" aria-label="Gráfico de barras de préstamos por mes durante {{ $anioSeleccionado }}">
         @foreach ($prestamosMes as $mes)
             <div class="flex h-full min-w-0 flex-1 flex-col items-center justify-end gap-2" title="{{ $mes->mes }}: {{ $mes->total }} unidades prestadas">
                 <span class="text-xs font-bold text-[#563884]">{{ $mes->total }}</span>
@@ -20,8 +33,13 @@
     </div>
 </section>
 <div class="grid-two">
-    <section class="panel"><h2 class="font-display font-bold text-[#35234f]">Libros más prestados</h2>
+    <section class="panel">
+        <div class="mb-3 flex flex-wrap items-start justify-between gap-3">
+            <div><h2 class="font-display font-bold text-[#35234f]">Libros más prestados</h2>
         <p class="muted">Los cinco títulos con más unidades prestadas</p>
+            </div>
+            <a class="button button-secondary" href="{{ route('admin.estadisticas.libros-mas-prestados') }}">Ver detalle</a>
+        </div>
         @forelse ($librosMasPrestados as $libro)
             <div class="mb-4">
                 <div class="mb-1 flex justify-between gap-3 text-sm"><span class="truncate">{{ $libro->titulo }}</span><strong>{{ $libro->total }}</strong></div>

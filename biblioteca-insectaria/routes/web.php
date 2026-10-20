@@ -47,4 +47,5 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
     Route::put('muebles/{mueble}', [MuebleController::class, 'update'])->name('muebles.update');
     Route::delete('muebles/{mueble}', [MuebleController::class, 'destroy'])->name('muebles.destroy');
     Route::get('estadisticas', DashboardController::class)->name('estadisticas');
+    Route::get('estadisticas/libros-mas-prestados', [DashboardController::class, 'librosMasPrestados'])->name('estadisticas.libros-mas-prestados');
 });
