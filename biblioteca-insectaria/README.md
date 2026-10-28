@@ -102,6 +102,11 @@ conserva una copia en
   los formularios de préstamo/devolución. Las escrituras no se almacenan en el
   service worker ni se envían en segundo plano.
 - Resumen estadístico agregado sin exponer fichas individuales de socios.
+- Calendarios mensuales de voluntariado con disponibilidad por día habitual y
+  excepciones por fecha, propuesta de asignación equilibrada, edición manual,
+  publicación y descarga de imagen PNG para compartir.
+- Actividades con notas de convocatoria y reportes privados de voluntarios
+  que administración puede marcar como pendientes, en proceso o resueltos.
 
 ## Variables principales
 

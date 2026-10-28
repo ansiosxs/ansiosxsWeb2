@@ -61,6 +61,12 @@
                 <div>
                     <p class="px-3 pb-2 text-xs font-extrabold uppercase tracking-[.14em] text-[#8b8491]">Administración</p>
                     <div class="space-y-1">
+                        <a href="{{ route('admin.turnos.index') }}" @class(['admin-nav-link', 'is-active' => request()->routeIs('admin.turnos.*')]) @click="sidebarOpen = false">
+                            <span aria-hidden="true">▦</span><span>Turnos y actividades</span>
+                        </a>
+                        <a href="{{ route('admin.reportes.index') }}" @class(['admin-nav-link', 'is-active' => request()->routeIs('admin.reportes.*')]) @click="sidebarOpen = false">
+                            <span aria-hidden="true">✉</span><span>Informes</span>
+                        </a>
                         <a href="{{ route('admin.anuncios.index') }}" @class(['admin-nav-link', 'is-active' => request()->routeIs('admin.anuncios.*')]) @click="sidebarOpen = false">
                             <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 10.25v3.5h3l9 4v-11l-9 3.5H4Zm3 3.5 1.5 5h3l-1.5-4.333M16 9.5a3 3 0 0 1 0 5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
                             <span>Anuncios</span>

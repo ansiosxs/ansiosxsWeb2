@@ -18,6 +18,8 @@ CREATE TABLE `users` (
     `email` varchar(255) NOT NULL,
     `email_verified_at` timestamp NULL DEFAULT NULL,
     `password` varchar(255) NOT NULL,
+    `role` varchar(255) NOT NULL DEFAULT 'voluntario',
+    `activo` tinyint(1) NOT NULL DEFAULT 1,
     `remember_token` varchar(100) DEFAULT NULL,
     `created_at` timestamp NULL DEFAULT NULL,
     `updated_at` timestamp NULL DEFAULT NULL,
@@ -94,6 +96,27 @@ CREATE TABLE `failed_jobs` (
     `failed_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (`id`),
     UNIQUE KEY `failed_jobs_uuid_unique` (`uuid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE `user_action_logs` (
+    `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+    `user_id` bigint unsigned NOT NULL,
+    `actor_id` bigint unsigned NOT NULL,
+    `action` varchar(255) NOT NULL,
+    `resource_type` varchar(255) DEFAULT NULL,
+    `resource_id` bigint unsigned DEFAULT NULL,
+    `details` json DEFAULT NULL,
+    `ip_address` varchar(45) DEFAULT NULL,
+    `user_agent` text DEFAULT NULL,
+    `created_at` timestamp NULL DEFAULT NULL,
+    `updated_at` timestamp NULL DEFAULT NULL,
+    PRIMARY KEY (`id`),
+    KEY `user_action_logs_user_id_foreign` (`user_id`),
+    KEY `user_action_logs_actor_id_foreign` (`actor_id`),
+    CONSTRAINT `user_action_logs_user_id_foreign`
+        FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+    CONSTRAINT `user_action_logs_actor_id_foreign`
+        FOREIGN KEY (`actor_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE `muebles` (
@@ -211,6 +234,116 @@ CREATE TABLE `recordatorios` (
         FOREIGN KEY (`prestamo_id`) REFERENCES `prestamos` (`id`) ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE `turno_schedules` (
+    `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+    `year` smallint unsigned NOT NULL,
+    `month` tinyint unsigned NOT NULL,
+    `volunteers_per_day` tinyint unsigned NOT NULL DEFAULT 2,
+    `availability_closes_at` datetime DEFAULT NULL,
+    `status` varchar(255) NOT NULL DEFAULT 'draft',
+    `created_by` bigint unsigned NOT NULL,
+    `published_at` timestamp NULL DEFAULT NULL,
+    `created_at` timestamp NULL DEFAULT NULL,
+    `updated_at` timestamp NULL DEFAULT NULL,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `turno_schedules_year_month_unique` (`year`, `month`),
+    KEY `turno_schedules_created_by_foreign` (`created_by`),
+    CONSTRAINT `turno_schedules_created_by_foreign`
+        FOREIGN KEY (`created_by`) REFERENCES `users` (`id`) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE `turno_availabilities` (
+    `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+    `turno_schedule_id` bigint unsigned NOT NULL,
+    `user_id` bigint unsigned NOT NULL,
+    `weekdays` json NOT NULL,
+    `date_overrides` json NOT NULL,
+    `created_at` timestamp NULL DEFAULT NULL,
+    `updated_at` timestamp NULL DEFAULT NULL,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `turno_availabilities_schedule_user_unique` (`turno_schedule_id`, `user_id`),
+    KEY `turno_availabilities_user_id_foreign` (`user_id`),
+    CONSTRAINT `turno_availabilities_turno_schedule_id_foreign`
+        FOREIGN KEY (`turno_schedule_id`) REFERENCES `turno_schedules` (`id`) ON DELETE CASCADE,
+    CONSTRAINT `turno_availabilities_user_id_foreign`
+        FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE `turno_days` (
+    `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+    `turno_schedule_id` bigint unsigned NOT NULL,
+    `date` date NOT NULL,
+    `is_open` tinyint(1) NOT NULL DEFAULT 1,
+    `assignment_notes` text DEFAULT NULL,
+    `created_at` timestamp NULL DEFAULT NULL,
+    `updated_at` timestamp NULL DEFAULT NULL,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `turno_days_schedule_date_unique` (`turno_schedule_id`, `date`),
+    KEY `turno_days_date_is_open_index` (`date`, `is_open`),
+    CONSTRAINT `turno_days_turno_schedule_id_foreign`
+        FOREIGN KEY (`turno_schedule_id`) REFERENCES `turno_schedules` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE `turno_asignaciones` (
+    `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+    `turno_dia_id` bigint unsigned NOT NULL,
+    `user_id` bigint unsigned NOT NULL,
+    `assigned_by` bigint unsigned DEFAULT NULL,
+    `created_at` timestamp NULL DEFAULT NULL,
+    `updated_at` timestamp NULL DEFAULT NULL,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `turno_asignaciones_day_user_unique` (`turno_dia_id`, `user_id`),
+    KEY `turno_asignaciones_user_id_foreign` (`user_id`),
+    KEY `turno_asignaciones_assigned_by_foreign` (`assigned_by`),
+    CONSTRAINT `turno_asignaciones_turno_dia_id_foreign`
+        FOREIGN KEY (`turno_dia_id`) REFERENCES `turno_days` (`id`) ON DELETE CASCADE,
+    CONSTRAINT `turno_asignaciones_user_id_foreign`
+        FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+    CONSTRAINT `turno_asignaciones_assigned_by_foreign`
+        FOREIGN KEY (`assigned_by`) REFERENCES `users` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE `turno_actividades` (
+    `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+    `turno_schedule_id` bigint unsigned NOT NULL,
+    `date` date NOT NULL,
+    `title` varchar(160) NOT NULL,
+    `responsible` varchar(255) DEFAULT NULL,
+    `description` text NOT NULL,
+    `convocatoria` text DEFAULT NULL,
+    `created_by` bigint unsigned NOT NULL,
+    `created_at` timestamp NULL DEFAULT NULL,
+    `updated_at` timestamp NULL DEFAULT NULL,
+    PRIMARY KEY (`id`),
+    KEY `turno_actividades_schedule_date_index` (`turno_schedule_id`, `date`),
+    KEY `turno_actividades_created_by_foreign` (`created_by`),
+    CONSTRAINT `turno_actividades_turno_schedule_id_foreign`
+        FOREIGN KEY (`turno_schedule_id`) REFERENCES `turno_schedules` (`id`) ON DELETE CASCADE,
+    CONSTRAINT `turno_actividades_created_by_foreign`
+        FOREIGN KEY (`created_by`) REFERENCES `users` (`id`) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE `volunteer_reports` (
+    `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+    `title` varchar(160) NOT NULL,
+    `category` varchar(80) NOT NULL,
+    `description` text NOT NULL,
+    `status` varchar(255) NOT NULL DEFAULT 'open',
+    `reported_by` bigint unsigned NOT NULL,
+    `resolved_by` bigint unsigned DEFAULT NULL,
+    `resolved_at` timestamp NULL DEFAULT NULL,
+    `created_at` timestamp NULL DEFAULT NULL,
+    `updated_at` timestamp NULL DEFAULT NULL,
+    PRIMARY KEY (`id`),
+    KEY `volunteer_reports_status_created_at_index` (`status`, `created_at`),
+    KEY `volunteer_reports_reported_by_foreign` (`reported_by`),
+    KEY `volunteer_reports_resolved_by_foreign` (`resolved_by`),
+    CONSTRAINT `volunteer_reports_reported_by_foreign`
+        FOREIGN KEY (`reported_by`) REFERENCES `users` (`id`) ON DELETE RESTRICT,
+    CONSTRAINT `volunteer_reports_resolved_by_foreign`
+        FOREIGN KEY (`resolved_by`) REFERENCES `users` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 INSERT INTO `migrations` (`migration`, `batch`) VALUES
     ('0001_01_01_000000_create_users_table', 1),
     ('0001_01_01_000001_create_cache_table', 1),
@@ -223,4 +356,9 @@ INSERT INTO `migrations` (`migration`, `batch`) VALUES
     ('2026_10_16_000006_create_anuncios_table', 1),
     ('2026_10_16_000007_create_recordatorios_table', 1),
     ('2026_10_18_000001_add_registrar_to_socios_table', 2),
-    ('2026_10_18_000002_replace_individual_copies_with_inventory_quantities', 3);
+    ('2026_10_18_000002_replace_individual_copies_with_inventory_quantities', 3),
+    ('2026_10_20_000001_add_role_and_active_to_users_table', 4),
+    ('2026_10_20_000002_create_user_action_logs_table', 4),
+    ('2026_10_28_000001_create_turnos_and_reportes_tables', 5),
+    ('2026_10_28_000002_add_responsible_to_turno_actividades', 6),
+    ('2026_10_28_000003_add_assignment_notes_to_turno_days', 7);
