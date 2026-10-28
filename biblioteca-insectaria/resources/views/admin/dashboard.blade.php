@@ -52,10 +52,13 @@
             </div>
         @empty<p>Aún no hay préstamos registrados.</p>@endforelse
     </section>
-    <section class="panel"><h2 class="font-display font-bold text-[#35234f]">Socios por comuna</h2>
-        @forelse ($comunas as $comuna)<p>{{ $comuna->comuna }} <strong>{{ $comuna->total }}</strong></p>@empty<p>Sin información todavía.</p>@endforelse
-        <h3>Por ocupación</h3>
-        @forelse ($ocupaciones as $ocupacion)<p>{{ $ocupacion->ocupacion }} <strong>{{ $ocupacion->total }}</strong></p>@empty<p>Sin información todavía.</p>@endforelse
+    <section class="panel">
+        <h2 class="font-display font-bold text-[#35234f]">Socios por comuna</h2>
+        @forelse ($comunas as $comuna)
+            <p>{{ $comuna->nombre }} <strong>{{ $comuna->total }}</strong></p>
+        @empty
+            <p>Sin información todavía.</p>
+        @endforelse
     </section>
 </div>
 @endsection
