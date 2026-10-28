@@ -3,7 +3,12 @@
 @section('content')
 <section class="dashboard-hero sticker-card">
     <div><p class="eyebrow">Panel de gestión</p><h2>¡Hola, {{ auth()->user()->name }}!</h2><p>Este es el resumen de la biblioteca. Gracias por ayudar a que cada historia encuentre nuevas lectoras y lectores.</p></div>
-    <img class="dashboard-mascot" src="{{ asset('mascotas/lobo.png') }}" alt="" aria-hidden="true">
+    <div class="inline-form">
+        @if (auth()->user()?->isAdmin())
+            <a class="button button-secondary" href="{{ route('admin.exportar.todo') }}">Exportar todo CSV</a>
+        @endif
+        <img class="dashboard-mascot" src="{{ asset('mascotas/lobo.png') }}" alt="" aria-hidden="true">
+    </div>
 </section>
 <div class="stats-grid">
     <article class="stat-card"><span class="font-semibold text-[#716c77]">Socios con membresía vigente</span><strong>{{ $sociosActivos }}</strong><span class="text-sm text-[#716c77]">Membresías activas</span></article>

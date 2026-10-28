@@ -56,6 +56,10 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->grou
     Route::resource('usuarios', UserController::class)->except(['show']);
     Route::post('usuarios/{usuario}/estado', [UserController::class, 'toggleStatus'])->name('usuarios.toggle-status');
     Route::get('logs', [LogController::class, 'index'])->name('logs.index');
+    Route::get('exportar/libros', [\App\Http\Controllers\Admin\ExportController::class, 'libros'])->name('exportar.libros');
+    Route::get('exportar/socios', [\App\Http\Controllers\Admin\ExportController::class, 'socios'])->name('exportar.socios');
+    Route::get('exportar/prestamos', [\App\Http\Controllers\Admin\ExportController::class, 'prestamos'])->name('exportar.prestamos');
+    Route::get('exportar/todo', [\App\Http\Controllers\Admin\ExportController::class, 'todo'])->name('exportar.todo');
 
     Route::resource('anuncios', AnuncioController::class)->except(['index', 'show']);
 

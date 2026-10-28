@@ -137,6 +137,44 @@ class BibliotecaTest extends TestCase
         $this->assertDatabaseHas('libros', ['id' => $libro->id, 'deleted_at' => null]);
     }
 
+    public function test_admin_can_export_csv_inventory_and_volunteer_cannot_access_it(): void
+    {
+        $voluntario = User::factory()->create();
+        $administrador = User::factory()->create(['role' => User::ROLE_ADMIN]);
+        $libro = $this->createBookAndStock('Libro exportable');
+        $socio = $this->createMember();
+        $this->createActiveLoan($socio, $libro, $voluntario);
+
+        $this->actingAs($voluntario)->get(route('admin.exportar.libros'))->assertForbidden();
+        $this->actingAs($voluntario)->get(route('admin.exportar.socios'))->assertForbidden();
+        $this->actingAs($voluntario)->get(route('admin.exportar.prestamos'))->assertForbidden();
+        $this->actingAs($voluntario)->get(route('admin.exportar.todo'))->assertForbidden();
+
+        $this->actingAs($administrador)
+            ->get(route('admin.exportar.libros'))
+            ->assertOk()
+            ->assertHeader('Content-Type', 'text/csv; charset=UTF-8')
+            ->assertHeader('Content-Disposition', 'attachment; filename=inventario-libros.csv');
+
+        $this->actingAs($administrador)
+            ->get(route('admin.exportar.socios'))
+            ->assertOk()
+            ->assertHeader('Content-Type', 'text/csv; charset=UTF-8')
+            ->assertHeader('Content-Disposition', 'attachment; filename=socios.csv');
+
+        $this->actingAs($administrador)
+            ->get(route('admin.exportar.prestamos'))
+            ->assertOk()
+            ->assertHeader('Content-Type', 'text/csv; charset=UTF-8')
+            ->assertHeader('Content-Disposition', 'attachment; filename=prestamos.csv');
+
+        $this->actingAs($administrador)
+            ->get(route('admin.exportar.todo'))
+            ->assertOk()
+            ->assertHeader('Content-Type', 'text/csv; charset=UTF-8')
+            ->assertHeader('Content-Disposition', 'attachment; filename=biblioteca-export.csv');
+    }
+
     public function test_book_form_offers_isbn_scanning(): void
     {
         $voluntario = User::factory()->create();

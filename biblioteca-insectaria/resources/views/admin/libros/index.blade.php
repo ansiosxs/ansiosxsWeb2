@@ -1,7 +1,7 @@
 @extends('layouts.admin')
 @section('title', 'Libros')
 @section('content')
-<div class="page-heading"><div><p class="eyebrow">Catálogo</p><h1>Libros</h1></div><a class="button" href="{{ route('admin.libros.create') }}">Agregar libro</a></div>
+<div class="page-heading"><div><p class="eyebrow">Catálogo</p><h1>Libros</h1></div><div class="inline-form">@if (auth()->user()?->isAdmin())<a class="button button-secondary" href="{{ route('admin.exportar.libros') }}">Exportar CSV</a>@endif<a class="button" href="{{ route('admin.libros.create') }}">Agregar libro</a></div></div>
 <form class="search-form" method="get"><label for="q">Buscar por título o autor</label><div class="inline-form"><input id="q" name="q" value="{{ $q }}" type="search"><button class="button">Buscar</button></div></form>
 <div class="table-wrap"><table><thead><tr><th>Libro</th><th>Ubicación</th><th>En inventario</th><th>Disponibles</th><th></th></tr></thead><tbody>
 @forelse ($libros as $libro)

@@ -1,7 +1,7 @@
 @extends('layouts.admin')
 @section('title', 'Préstamos')
 @section('content')
-<div class="page-heading"><div><p class="eyebrow">Circulación</p><h1>Préstamos y devoluciones</h1></div><a href="{{ route('admin.morosidad') }}">Ver morosidad</a></div>
+<div class="page-heading"><div><p class="eyebrow">Circulación</p><h1>Préstamos y devoluciones</h1></div><div class="inline-form">@if (auth()->user()?->isAdmin())<a class="button button-secondary" href="{{ route('admin.exportar.prestamos') }}">Exportar CSV</a>@endif<a href="{{ route('admin.morosidad') }}">Ver morosidad</a></div></div>
 <section class="panel"><h2>Registrar préstamo</h2><p>Busca un título, indica cuántas unidades se lleva el socio y confirma.</p>
     <form class="form-stack" method="post" action="{{ route('admin.prestamos.store') }}" data-resiliente="prestamo" data-libros-url="{{ route('admin.prestamos.libros') }}">
         @csrf
