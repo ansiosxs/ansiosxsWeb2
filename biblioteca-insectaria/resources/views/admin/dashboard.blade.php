@@ -57,13 +57,34 @@
             </div>
         @empty<p>Aún no hay préstamos registrados.</p>@endforelse
     </section>
-    <section class="panel">
-        <h2 class="font-display font-bold text-[#35234f]">Socios por comuna</h2>
-        @forelse ($comunas as $comuna)
-            <p>{{ $comuna->nombre }} <strong>{{ $comuna->total }}</strong></p>
-        @empty
-            <p>Sin información todavía.</p>
-        @endforelse
-    </section>
+<section class="panel">
+            <h2 class="font-display font-bold text-[#35234f]">Socios por comuna</h2>
+            @if ($comunas->isNotEmpty())
+                @php
+                    $maxComuna = $maxComuna ?? max(1, (int) $comunas->max('total'));
+                @endphp
+                <div class="flex h-56 items-end gap-2 border-b border-[#e7e0d8] px-2 pt-4" role="img" aria-label="Gráfico de barras de socios por comuna">
+                    @foreach ($comunas as $comuna)
+                        <div class="relative flex h-full min-w-0 flex-1 flex-col items-center justify-end gap-2" x-data="{ open: false }" @mouseenter="open = true" @mouseleave="open = false" x-cloak>
+                            <span class="text-xs font-bold text-[#563884]">{{ $comuna->total }}</span>
+                            <div class="w-full max-w-8 rounded-t-md bg-brand-500" style="height: {{ max(5, (int) round($comuna->total / $maxComuna * 100)) }}%"></div>
+                            <span class="text-[.65rem] font-semibold text-[#716c77] truncate max-w-full" title="{{ $comuna->nombre }}">{{ $comuna->nombre }}</span>
+                            @if ($comuna->nombre === 'Otras' && $comunasTooltip)
+                                <div x-show="open" class="absolute -top-16 left-1/2 z-10 w-64 -translate-x-1/2 rounded-md border border-[#e7e0d8] bg-white p-3 shadow-lg" x-cloak>
+                                    <div class="text-xs font-bold text-[#35234f]">Comunas en "Otras":</div>
+                                    <ul class="mt-2 max-h-48 overflow-y-auto space-y-1">
+                                        @foreach ($comunasTooltip as $tooltipComuna)
+                                            <li class="text-xs text-[#716c77]">{{ $tooltipComuna['nombre'] }}: <strong>{{ $tooltipComuna['total'] }}</strong></li>
+                                        @endforeach
+                                    </ul>
+                                </div>
+                            @endif
+                        </div>
+                    @endforeach
+                </div>
+            @else
+                <p>Sin información todavía.</p>
+            @endif
+        </section>
 </div>
 @endsection

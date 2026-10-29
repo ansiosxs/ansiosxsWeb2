@@ -56,7 +56,8 @@ class DashboardController extends Controller
 
         $librosMasPrestados = $this->queryLibrosMasPrestados()->limit(5)->get();
         $maxLibro = max(1, (int) $librosMasPrestados->max('total'));
-        $comunas = $this->agruparCategorias(Socio::query()->whereNotNull('comuna')->where('comuna', '!=', '')->pluck('comuna'));
+        [$comunas, $comunasTooltip] = $this->agruparComunasConOtras(Socio::query()->whereNotNull('comuna')->where('comuna', '!=', '')->pluck('comuna'));
+        $maxComuna = max(1, (int) $comunas->max('total'));
 
         return view('admin.dashboard', [
             'prestamosMes' => $meses,
@@ -68,6 +69,8 @@ class DashboardController extends Controller
             'sociosActivos' => Socio::query()->where('activo', true)->whereDate('vigente_hasta', '>=', today())->count(),
             'prestamosActivos' => (int) Prestamo::query()->where('estado', 'activo')->selectRaw('COALESCE(SUM(cantidad - cantidad_devuelta), 0) as total')->value('total'),
             'comunas' => $comunas,
+            'comunasTooltip' => $comunasTooltip,
+            'maxComuna' => $maxComuna,
             'morosos' => (int) Prestamo::query()->where('estado', 'activo')->whereDate('fecha_vencimiento', '<', today())->selectRaw('COALESCE(SUM(cantidad - cantidad_devuelta), 0) as total')->value('total'),
         ]);
     }
@@ -90,7 +93,7 @@ class DashboardController extends Controller
             ->orderBy('libros.titulo');
     }
 
-    private function agruparCategorias($valores): \Illuminate\Support\Collection
+    private function agruparComunasConOtras($valores): array
     {
         $agregados = [];
 
@@ -115,14 +118,36 @@ class DashboardController extends Controller
             $agregados[$clave]['total']++;
         }
 
-        return collect($agregados)
+        $comunas = collect($agregados)
             ->map(fn (array $categoria) => (object) [
                 'nombre' => $categoria['nombre'],
                 'total' => (int) $categoria['total'],
             ])
             ->sortByDesc('total')
-            ->take(8)
             ->values();
+
+        $comunas = $comunas->values();
+
+        $tooltip = null;
+
+        if ($comunas->count() > 10) {
+            $top = $comunas->take(9)->values();
+            $resto = $comunas->slice(9)->values();
+
+            $tooltip = $resto->map(fn ($comuna) => [
+                'nombre' => $comuna->nombre,
+                'total' => (int) $comuna->total,
+            ])->toArray();
+
+            $otrasTotal = $resto->sum(fn ($comuna) => $comuna->total);
+
+            $comunas = $top->push((object) [
+                'nombre' => 'Otras',
+                'total' => (int) $otrasTotal,
+            ]);
+        }
+
+        return [$comunas, $tooltip];
     }
 
     private function normalizarCategoria(string $valor): string
