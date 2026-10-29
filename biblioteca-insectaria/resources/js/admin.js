@@ -3,6 +3,46 @@ import Alpine from 'alpinejs';
 window.Alpine = Alpine;
 Alpine.start();
 
+document.querySelectorAll('[data-book-image-form]').forEach((form) => {
+    const urlInput = form.querySelector('[data-book-image-url]');
+    const fileInput = form.querySelector('[data-book-image-file]');
+    const preview = form.querySelector('[data-book-image-preview]');
+    let previewUrl;
+
+    const showPreview = (source) => {
+        preview.hidden = !source;
+        if (source) preview.src = source;
+        else preview.removeAttribute('src');
+    };
+
+    const releasePreviewUrl = () => {
+        if (previewUrl) URL.revokeObjectURL(previewUrl);
+        previewUrl = undefined;
+    };
+
+    urlInput.addEventListener('input', () => {
+        fileInput.value = '';
+        releasePreviewUrl();
+        showPreview(urlInput.value.trim());
+    });
+
+    fileInput.addEventListener('change', () => {
+        releasePreviewUrl();
+        if (fileInput.files[0]) {
+            previewUrl = URL.createObjectURL(fileInput.files[0]);
+            showPreview(previewUrl);
+        } else {
+            showPreview(urlInput.value.trim());
+        }
+    });
+
+    preview.addEventListener('error', () => {
+        preview.hidden = true;
+    });
+
+    window.addEventListener('pagehide', releasePreviewUrl, { once: true });
+});
+
 document.addEventListener('click', async (event) => {
     const button = event.target.closest('[data-calendar-png]');
     if (!button) return;

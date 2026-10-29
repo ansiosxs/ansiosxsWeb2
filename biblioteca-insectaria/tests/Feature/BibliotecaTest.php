@@ -10,7 +10,10 @@ use App\Models\Prestamo;
 use App\Models\Socio;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Tests\TestCase;
 
@@ -185,7 +188,47 @@ class BibliotecaTest extends TestCase
             ->assertSee('data-isbn-escanear', false)
             ->assertSee('data-isbn-input', false)
             ->assertSee('data-isbn-video', false)
-            ->assertSee('Escanear ISBN');
+            ->assertSee('Escanear ISBN')
+            ->assertSee('Imagen')
+            ->assertSee('data-book-image-url', false)
+            ->assertSee('data-book-image-file', false)
+            ->assertSee('data-book-image-preview', false);
+    }
+
+    public function test_book_cover_can_be_set_by_url_or_uploaded_file(): void
+    {
+        Storage::fake('public');
+        $voluntario = User::factory()->create();
+
+        $this->actingAs($voluntario)->post(route('admin.libros.store'), [
+            'titulo' => 'Portada por URL',
+            'autor' => 'Autora',
+            'cantidad_total' => 1,
+            'portada_url' => 'https://example.com/portada.jpg',
+        ])->assertRedirect();
+
+        $libro = Libro::query()->where('titulo', 'Portada por URL')->firstOrFail();
+        $this->assertSame('https://example.com/portada.jpg', $libro->portada_url);
+
+        $image = UploadedFile::fake()->image('portada.png');
+        $this->put(route('admin.libros.update', $libro), [
+            'titulo' => $libro->titulo,
+            'autor' => $libro->autor,
+            'cantidad_total' => $libro->cantidad_total,
+            'portada' => $image,
+        ])->assertRedirect(route('admin.libros.show', $libro));
+
+        $path = 'book-covers/'.$image->hashName();
+        Storage::disk('public')->assertExists($path);
+        $this->assertSame(url(Storage::disk('public')->url($path)), $libro->fresh()->portada_url);
+
+        $libro->refresh();
+        $this->put(route('admin.libros.update', $libro), [
+            'titulo' => $libro->titulo,
+            'autor' => $libro->autor,
+            'cantidad_total' => $libro->cantidad_total,
+            'portada_url' => $libro->portada_url,
+        ])->assertRedirect(route('admin.libros.show', $libro));
     }
 
     public function test_us02_book_with_loan_history_is_soft_deleted_after_all_units_are_returned(): void
@@ -258,7 +301,7 @@ class BibliotecaTest extends TestCase
             ->get(route('admin.socios.index', ['q' => $search]))
             ->assertOk();
 
-        $log = \Illuminate\Support\Facades\DB::table('user_action_logs')->latest('id')->first();
+        $log = DB::table('user_action_logs')->latest('id')->first();
         $this->assertNotNull($log);
         $this->assertSame($voluntario->id, $log->user_id);
         $this->assertSame('GET admin.socios.index', $log->action);
@@ -620,6 +663,7 @@ class BibliotecaTest extends TestCase
         $this->createCatalogBook('Zeta', 'Ana');
         $this->createCatalogBook('Beta', 'Zoe');
         $this->createCatalogBook('Alfa', 'Luis');
+        $this->createCatalogBook('Libro sin autor', '')->update(['autor' => null]);
 
         $this->getJson('/api/catalogo')
             ->assertOk()
@@ -629,22 +673,24 @@ class BibliotecaTest extends TestCase
         $this->getJson('/api/catalogo?orden=titulo_asc')
             ->assertOk()
             ->assertJsonPath('datos.0.titulo', 'Alfa')
-            ->assertJsonPath('datos.2.titulo', 'Zeta');
+            ->assertJsonPath('datos.3.titulo', 'Zeta');
 
         $this->getJson('/api/catalogo?orden=titulo_desc')
             ->assertOk()
             ->assertJsonPath('datos.0.titulo', 'Zeta')
-            ->assertJsonPath('datos.2.titulo', 'Alfa');
+            ->assertJsonPath('datos.3.titulo', 'Alfa');
 
         $this->getJson('/api/catalogo?orden=autor_asc')
             ->assertOk()
             ->assertJsonPath('datos.0.autor', 'Ana')
-            ->assertJsonPath('datos.2.autor', 'Zoe');
+            ->assertJsonPath('datos.2.autor', 'Zoe')
+            ->assertJsonPath('datos.3.titulo', 'Libro sin autor');
 
         $this->getJson('/api/catalogo?orden=autor_desc')
             ->assertOk()
             ->assertJsonPath('datos.0.autor', 'Zoe')
-            ->assertJsonPath('datos.2.autor', 'Ana');
+            ->assertJsonPath('datos.2.autor', 'Ana')
+            ->assertJsonPath('datos.3.titulo', 'Libro sin autor');
 
         $this->getJson('/api/catalogo?orden=columna_privada')
             ->assertStatus(422)

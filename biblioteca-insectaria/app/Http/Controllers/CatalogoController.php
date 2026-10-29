@@ -8,8 +8,8 @@ use App\Models\Mueble;
 use App\Models\Prestamo;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\View\View;
 use Illuminate\Validation\Rule;
+use Illuminate\View\View;
 
 class CatalogoController extends Controller
 {
@@ -69,6 +69,7 @@ class CatalogoController extends Controller
                 ->orWhere('autor', 'like', "%{$busqueda}%")
                 ->orWhereRaw("REPLACE(REPLACE(REPLACE(isbn, '-', ''), ' ', ''), '.', '') LIKE ?", ["%{$isbnBusqueda}%"])))
             ->when(isset($validated['mueble_id']), fn ($query) => $query->where('mueble_id', $validated['mueble_id']))
+            ->when($columna === 'autor', fn ($query) => $query->orderByRaw('CASE WHEN autor IS NULL THEN 1 ELSE 0 END'))
             ->orderBy($columna, $direccion)
             ->orderBy('id')
             ->paginate(12, ['*'], 'pagina', $validated['pagina'] ?? 1);

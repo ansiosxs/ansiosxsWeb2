@@ -132,7 +132,7 @@ CREATE TABLE `muebles` (
 CREATE TABLE `libros` (
     `id` bigint unsigned NOT NULL AUTO_INCREMENT,
     `titulo` varchar(255) NOT NULL,
-    `autor` varchar(255) NOT NULL,
+    `autor` varchar(255) DEFAULT NULL,
     `isbn` varchar(20) DEFAULT NULL,
     `editorial` varchar(255) DEFAULT NULL,
     `anio` smallint unsigned DEFAULT NULL,

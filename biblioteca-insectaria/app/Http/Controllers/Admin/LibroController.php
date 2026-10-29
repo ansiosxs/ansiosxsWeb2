@@ -7,8 +7,10 @@ use App\Models\Libro;
 use App\Models\Mueble;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
+use RuntimeException;
 
 class LibroController extends Controller
 {
@@ -80,12 +82,27 @@ class LibroController extends Controller
             'editorial' => ['nullable', 'string', 'max:255'],
             'anio' => ['nullable', 'integer', 'between:1000,9999'],
             'portada_url' => ['nullable', 'url', 'max:255'],
+            'portada' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
             'mueble_id' => ['nullable', 'exists:muebles,id'],
         ], [
             'titulo.required' => 'El título es obligatorio.',
             'autor.required' => 'El autor es obligatorio.',
             'portada_url.url' => 'La portada debe ser una dirección web válida.',
+            'portada.image' => 'La portada debe ser una imagen válida.',
+            'portada.mimes' => 'La imagen debe estar en formato JPG, PNG o WebP.',
+            'portada.max' => 'La imagen no puede superar los 5 MB.',
         ]);
+
+        if ($request->hasFile('portada')) {
+            $path = $request->file('portada')->storePublicly('book-covers', 'public');
+
+            if ($path === false) {
+                throw new RuntimeException('No se pudo guardar la imagen de portada.');
+            }
+
+            $datos['portada_url'] = url(Storage::disk('public')->url($path));
+        }
+        unset($datos['portada']);
 
         if ($request->route('libro') instanceof Libro) {
             $prestadas = $request->route('libro')->prestamos()
