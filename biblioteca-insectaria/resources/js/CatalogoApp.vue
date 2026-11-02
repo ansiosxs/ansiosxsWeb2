@@ -197,6 +197,9 @@ function closeBook() {
             <img v-if="selectedBook.portada_url" :src="selectedBook.portada_url" :alt="`Portada de ${selectedBook.titulo}`">
             <h2>{{ selectedBook.titulo }}</h2><p>Autor: {{ selectedBook.autor }}</p>
             <p v-if="selectedBook.editorial">Editorial: {{ selectedBook.editorial }}</p><p v-if="selectedBook.anio">Año: {{ selectedBook.anio }}</p>
+            <p v-if="selectedBook.paginas">Páginas: {{ selectedBook.paginas }}</p>
+            <p v-if="selectedBook.idioma">Idioma: {{ selectedBook.idioma }}</p>
+            <p v-if="selectedBook.descripcion">Descripción: {{ selectedBook.descripcion }}</p>
             <p v-if="selectedBook.mueble">Ubicación: {{ selectedBook.mueble }}</p>
             <p>{{ selectedBook.cantidad_disponible }} unidades disponibles.</p>
         </section>

@@ -13,6 +13,7 @@ class LogController extends Controller
     {
         $logs = UserActionLog::query()
             ->with(['user', 'actor'])
+            ->whereIn('details->method', ['POST', 'PUT', 'PATCH', 'DELETE'])
             ->latest()
             ->paginate(25)
             ->withQueryString();

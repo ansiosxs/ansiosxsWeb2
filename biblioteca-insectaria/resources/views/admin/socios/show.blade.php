@@ -15,8 +15,18 @@
         <form method="post" action="{{ route('admin.socios.renovar', $socio) }}">@csrf<button class="button" type="submit">Renovar membresía por un año</button></form>
     </div>
 </section>
-<section class="panel"><h2>Historial de préstamos</h2><div class="table-wrap"><table><thead><tr><th>Libro</th><th>Prestadas</th><th>Devueltas</th><th>Préstamo</th><th>Vencimiento</th><th>Devolución</th><th>Registrado por</th><th>Estado</th></tr></thead><tbody>
-@forelse ($socio->prestamos as $prestamo)<tr><td>{{ $prestamo->libro->titulo }}</td><td>{{ $prestamo->cantidad }}</td><td>{{ $prestamo->cantidad_devuelta }}</td><td>{{ $prestamo->fecha_prestamo->format('d/m/Y') }}</td><td>{{ $prestamo->fecha_vencimiento->format('d/m/Y') }}</td><td>{{ $prestamo->fecha_devolucion?->format('d/m/Y') ?? '—' }}</td><td>{{ $prestamo->registradoPor?->name ?? 'Cuenta eliminada' }}</td><td>{{ ucfirst($prestamo->estado) }}</td></tr>
-@empty<tr><td colspan="6">Sin préstamos registrados.</td></tr>@endforelse
+<section class="panel"><h2>Historial de préstamos</h2><div class="table-wrap"><table><thead><tr><th>Libro</th><th>Prestadas</th><th>Devueltas</th><th>Préstamo</th><th>Vencimiento</th><th>Devolución</th><th>Registrado por</th><th>Estado</th><th>Acciones</th></tr></thead>
+<tbody>
+@forelse ($socio->prestamos as $prestamo)<tr><td>{{ $prestamo->libro->titulo }}</td><td>{{ $prestamo->cantidad }}</td><td>{{ $prestamo->cantidad_devuelta }}</td><td>{{ $prestamo->fecha_prestamo->format('d/m/Y') }}</td><td>{{ $prestamo->fecha_vencimiento->format('d/m/Y') }}</td><td>{{ $prestamo->fecha_devolucion?->format('d/m/Y') ?? '—' }}</td><td>{{ $prestamo->registradoPor?->name ?? 'Cuenta eliminada' }}</td><td>{{ ucfirst($prestamo->estado) }}</td><td class="flex gap-2">
+    @if ($prestamo->estado === 'activo' && $prestamo->fecha_vencimiento->lt(today()))
+        <form method="post" action="{{ route('admin.prestamos.marcar-devuelto', $prestamo) }}" data-confirm="¿Marcar este préstamo como devuelto?">@csrf<button class="button button-secondary" type="submit">Devuelto</button></form>
+    @endif
+    <a class="button button-secondary" href="{{ route('admin.prestamos.editar', $prestamo) }}">Editar</a>
+    <form method="post" action="{{ route('admin.prestamos.destroy', $prestamo) }}" data-confirm="Esta acción eliminará definitivamente el registro del préstamo de {{ $prestamo->libro->titulo }}. Puede afectar el historial del socio y la disponibilidad del libro. ¿Deseas continuar?">@csrf @method('delete')
+        <input type="hidden" name="volver" value="socio">
+        <button class="button button-danger" type="submit">Eliminar registro</button>
+    </form>
+</td></tr>
+@empty<tr><td colspan="9">Sin préstamos registrados.</td></tr>@endforelse
 </tbody></table></div></section>
 @endsection

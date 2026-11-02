@@ -14,11 +14,20 @@ class LogUserAction
         $response = $next($request);
         $user ??= $request->user();
 
-        if (! $user || $user->isAdmin()) {
+        if (
+            ! $user
+            || ! in_array($request->method(), ['POST', 'PUT', 'PATCH', 'DELETE'], true)
+            || $response->getStatusCode() >= 400
+            || $request->session()->has('errors')
+        ) {
             return $response;
         }
 
         $route = $request->route();
+        if ($route?->getName() === 'admin.logs.index') {
+            return $response;
+        }
+
         $controller = $route?->getControllerClass();
         $resourceType = $controller ? class_basename($controller) : 'route';
         $resource = collect($route?->parameters() ?? [])

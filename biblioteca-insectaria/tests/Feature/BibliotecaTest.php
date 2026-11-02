@@ -9,6 +9,7 @@ use App\Models\Mueble;
 use App\Models\Prestamo;
 use App\Models\Socio;
 use App\Models\User;
+use App\Models\UserActionLog;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
@@ -195,6 +196,47 @@ class BibliotecaTest extends TestCase
             ->assertSee('data-book-image-preview', false);
     }
 
+    public function test_book_metadata_can_be_saved_and_is_shown_on_admin_book_detail(): void
+    {
+        $voluntario = User::factory()->create();
+
+        $this->actingAs($voluntario)->post(route('admin.libros.store'), [
+            'titulo' => 'Libro con ficha completa',
+            'autor' => 'Autora',
+            'cantidad_total' => 2,
+            'anio' => 2024,
+            'paginas' => 280,
+            'idioma' => 'Español',
+            'descripcion' => 'Una descripción completa.',
+            'portada_url' => 'https://example.com/portada.jpg',
+        ])->assertRedirect();
+
+        $libro = Libro::query()->where('titulo', 'Libro con ficha completa')->firstOrFail();
+        $this->assertDatabaseHas('libros', [
+            'id' => $libro->id,
+            'anio' => 2024,
+            'paginas' => 280,
+            'idioma' => 'Español',
+            'descripcion' => 'Una descripción completa.',
+        ]);
+
+        $this->get(route('admin.libros.show', $libro))
+            ->assertOk()
+            ->assertSee('https://example.com/portada.jpg')
+            ->assertSee('Portada de Libro con ficha completa')
+            ->assertSee('Año de publicación:')
+            ->assertSee('2024')
+            ->assertSee('280')
+            ->assertSee('Español')
+            ->assertSee('Una descripción completa.');
+
+        $this->get(route('admin.libros.index'))
+            ->assertOk()
+            ->assertDontSee('2024')
+            ->assertDontSee('Español')
+            ->assertDontSee('Una descripción completa.');
+    }
+
     public function test_book_cover_can_be_set_by_url_or_uploaded_file(): void
     {
         Storage::fake('public');
@@ -292,7 +334,7 @@ class BibliotecaTest extends TestCase
         $this->assertDatabaseMissing('muebles', ['nombre' => 'Nueva estantería']);
     }
 
-    public function test_volunteer_activity_log_records_reads_without_storing_search_values(): void
+    public function test_action_log_omits_queries_and_records_session_changes(): void
     {
         $voluntario = User::factory()->create();
         $search = 'dato-personal-que-no-debe-guardarse';
@@ -301,17 +343,103 @@ class BibliotecaTest extends TestCase
             ->get(route('admin.socios.index', ['q' => $search]))
             ->assertOk();
 
-        $log = DB::table('user_action_logs')->latest('id')->first();
-        $this->assertNotNull($log);
-        $this->assertSame($voluntario->id, $log->user_id);
-        $this->assertSame('GET admin.socios.index', $log->action);
-        $this->assertStringNotContainsString($search, $log->details);
-        $this->assertContains('q', json_decode($log->details, true)['query_keys']);
+        $this->assertDatabaseMissing('user_action_logs', [
+            'user_id' => $voluntario->id,
+            'action' => 'GET admin.socios.index',
+        ]);
 
         $this->post(route('logout'))->assertRedirect(route('login'));
         $this->assertDatabaseHas('user_action_logs', [
             'user_id' => $voluntario->id,
             'action' => 'POST logout',
+        ]);
+    }
+
+    public function test_action_log_displays_plain_language_descriptions(): void
+    {
+        $voluntario = User::factory()->create();
+        $admin = User::factory()->create(['role' => User::ROLE_ADMIN]);
+
+        $this->actingAs($voluntario)->post(route('admin.libros.store'), [
+            'titulo' => 'Libro en bitácora',
+            'autor' => 'Autora',
+            'cantidad_total' => 1,
+        ])->assertRedirect();
+
+        UserActionLog::query()->create([
+            'user_id' => $voluntario->id,
+            'actor_id' => $voluntario->id,
+            'action' => 'GET admin.socios.index',
+            'resource_type' => 'SocioController',
+            'details' => ['route' => 'admin.socios.index', 'method' => 'GET'],
+        ]);
+
+        $this->actingAs($admin)->get(route('admin.logs.index'))
+            ->assertOk()
+            ->assertSee('Quién')
+            ->assertSee('Qué hizo')
+            ->assertSee('Elemento relacionado')
+            ->assertSee('Registró un libro')
+            ->assertSee('Libro')
+            ->assertDontSee('Consultó la lista de socias y socios')
+            ->assertDontSee('GET admin.libros.index')
+            ->assertDontSee('IP');
+    }
+
+    public function test_action_log_records_successful_creates_edits_and_admin_deletions(): void
+    {
+        $voluntario = User::factory()->create();
+        $admin = User::factory()->create(['role' => User::ROLE_ADMIN]);
+
+        $this->actingAs($voluntario)->post(route('admin.libros.store'), [
+            'titulo' => 'Libro para auditar',
+            'autor' => 'Autora',
+            'cantidad_total' => 1,
+        ])->assertRedirect();
+
+        $libro = Libro::query()->where('titulo', 'Libro para auditar')->firstOrFail();
+        $this->assertDatabaseHas('user_action_logs', [
+            'user_id' => $voluntario->id,
+            'action' => 'POST admin.libros.store',
+        ]);
+        $this->assertSame(
+            'Registró un libro',
+            UserActionLog::query()->latest('id')->firstOrFail()->accion_legible,
+        );
+
+        $this->put(route('admin.libros.update', $libro), [
+            'titulo' => 'Libro auditado actualizado',
+            'autor' => 'Autora',
+            'cantidad_total' => 1,
+        ])->assertRedirect();
+
+        $this->assertSame(
+            'Actualizó un libro',
+            UserActionLog::query()->latest('id')->firstOrFail()->accion_legible,
+        );
+
+        $this->actingAs($admin)->delete(route('admin.libros.destroy', $libro))->assertRedirect();
+
+        $this->assertDatabaseHas('user_action_logs', [
+            'user_id' => $admin->id,
+            'action' => 'DELETE admin.libros.destroy',
+        ]);
+        $this->get(route('admin.logs.index'))
+            ->assertOk()
+            ->assertSee('Eliminó un libro');
+    }
+
+    public function test_failed_actions_are_not_recorded_as_completed_actions(): void
+    {
+        $voluntario = User::factory()->create();
+
+        $this->actingAs($voluntario)->from(route('admin.libros.create'))
+            ->post(route('admin.libros.store'), ['titulo' => '', 'autor' => 'Autora'])
+            ->assertSessionHasErrors('titulo');
+
+        $this->assertDatabaseMissing('user_action_logs', [
+            'user_id' => $voluntario->id,
+            'action' => 'POST admin.libros.store',
         ]);
     }
 
@@ -394,8 +522,12 @@ class BibliotecaTest extends TestCase
         $uuid = (string) Str::uuid();
         $payload = ['libro_id' => $libro->id, 'cantidad' => 2, 'socio_id' => $socio->id, 'operacion_uuid' => $uuid];
 
-        $this->actingAs($voluntario)->postJson(route('admin.prestamos.store'), $payload)
-            ->assertOk()->assertJsonPath('redireccion', route('admin.prestamos.index'));
+        $response = $this->actingAs($voluntario)->postJson(route('admin.prestamos.store'), $payload);
+        $response
+            ->assertOk()
+            ->assertJsonPath('mensaje', 'Préstamo ingresado correctamente. Vence el 30/10/2026.')
+            ->assertJsonPath('redireccion', route('admin.prestamos.index'))
+            ->assertSessionHas('status', 'Préstamo ingresado correctamente. Vence el 30/10/2026.');
         $this->postJson(route('admin.prestamos.store'), $payload)->assertOk();
 
         $this->assertDatabaseCount('prestamos', 1);
@@ -408,6 +540,116 @@ class BibliotecaTest extends TestCase
             'user_id' => $voluntario->id,
         ]);
         $this->assertSame(1, $libro->fresh()->cantidad_disponible);
+    }
+
+    public function test_loan_registration_shows_success_flash_message(): void
+    {
+        $voluntario = User::factory()->create();
+        $socio = $this->createMember();
+        $libro = $this->createBookAndStock('Una lectura');
+
+        $this->actingAs($voluntario)->post(route('admin.prestamos.store'), [
+            'libro_id' => $libro->id,
+            'cantidad' => 1,
+            'socio_id' => $socio->id,
+            'operacion_uuid' => (string) Str::uuid(),
+        ])->assertRedirect(route('admin.prestamos.index'))
+            ->assertSessionHas('status', 'Préstamo ingresado correctamente. Vence el 30/10/2026.');
+
+        $this->get(route('admin.prestamos.index'))
+            ->assertOk()
+            ->assertSee('Préstamo ingresado correctamente. Vence el 30/10/2026.');
+    }
+
+    public function test_active_loan_list_can_be_searched_by_book_title_or_member_name(): void
+    {
+        $voluntario = User::factory()->create();
+        $ana = $this->createMember(['nombres' => 'Ana', 'apellidos' => 'Lectora']);
+        $bruno = $this->createMember(['nombres' => 'Bruno', 'apellidos' => 'Socio']);
+        $book = $this->createBookAndStock('El libro escondido');
+        $otherBook = $this->createBookAndStock('Otra lectura');
+        $this->createActiveLoan($ana, $book, $voluntario);
+        $this->createActiveLoan($bruno, $otherBook, $voluntario);
+
+        $this->actingAs($voluntario)->get(route('admin.prestamos.index', ['q' => 'libro escondido']))
+            ->assertOk()
+            ->assertSee('El libro escondido')
+            ->assertDontSee('Otra lectura')
+            ->assertSee('name="q"', false)
+            ->assertSee('value="libro escondido"', false);
+
+        $this->get(route('admin.prestamos.index', ['q' => 'Ana Lectora']))
+            ->assertOk()
+            ->assertSee('El libro escondido')
+            ->assertDontSee('Otra lectura');
+    }
+
+    public function test_active_loan_search_updates_rows_and_pagination_asynchronously(): void
+    {
+        $voluntario = User::factory()->create();
+        $socio = $this->createMember(['nombres' => 'Ana', 'apellidos' => 'Lectora']);
+        $book = $this->createBookAndStock('El libro escondido');
+        for ($index = 0; $index < 26; $index++) {
+            $this->createActiveLoan($socio, $book, $voluntario);
+        }
+
+        $this->actingAs($voluntario)
+            ->withHeaders(['X-Requested-With' => 'XMLHttpRequest'])
+            ->getJson(route('admin.prestamos.index', ['q' => 'Ana']))
+            ->assertOk()
+            ->assertJsonStructure(['rows', 'pagination'])
+            ->assertJsonPath('rows', fn (string $rows) => str_contains($rows, 'El libro escondido'))
+            ->assertJsonPath('pagination', fn (string $pagination) => str_contains($pagination, 'page=2'));
+    }
+
+    public function test_active_loan_can_be_edited_and_deleted_from_the_loan_table(): void
+    {
+        $voluntario = User::factory()->create();
+        $socio = $this->createMember();
+        $book = $this->createBookAndStock('Libro editable', 2);
+        $loan = $this->createActiveLoan($socio, $book, $voluntario);
+
+        $this->actingAs($voluntario)
+            ->get(route('admin.prestamos.index', ['q' => 'Libro']))
+            ->assertOk()
+            ->assertSee('data-busqueda-viva', false)
+            ->assertSee('Editar')
+            ->assertSee('Eliminar')
+            ->assertSee('data-confirm="¿Eliminar definitivamente el registro de este préstamo?"', false);
+
+        $this->put(route('admin.prestamos.update', $loan), [
+            'cantidad' => 1,
+            'cantidad_devuelta' => 0,
+            'fecha_prestamo' => today()->format('Y-m-d'),
+            'fecha_vencimiento' => today()->addDays(14)->format('Y-m-d'),
+            'volver' => 'prestamos',
+            'q' => 'Libro',
+        ])->assertRedirect(route('admin.prestamos.index', ['q' => 'Libro']));
+
+        $this->delete(route('admin.prestamos.destroy', $loan), ['volver' => 'prestamos', 'q' => 'Libro'])
+            ->assertRedirect(route('admin.prestamos.index', ['q' => 'Libro']))
+            ->assertSessionHas('status', 'El registro del préstamo fue eliminado.');
+
+        $this->assertDatabaseMissing('prestamos', ['id' => $loan->id]);
+        $this->assertSame(2, $book->fresh()->cantidad_disponible);
+    }
+
+    public function test_member_profile_requires_confirmation_before_deleting_a_loan_record(): void
+    {
+        $voluntario = User::factory()->create();
+        $socio = $this->createMember();
+        $book = $this->createBookAndStock('Libro histórico');
+        $loan = $this->createActiveLoan($socio, $book, $voluntario);
+
+        $this->actingAs($voluntario)
+            ->get(route('admin.socios.show', $socio))
+            ->assertOk()
+            ->assertSee('Eliminar registro')
+            ->assertSee('Puede afectar el historial del socio y la disponibilidad del libro.');
+
+        $this->delete(route('admin.prestamos.destroy', $loan), ['volver' => 'socio'])
+            ->assertRedirect(route('admin.socios.show', $socio));
+        $this->assertDatabaseMissing('prestamos', ['id' => $loan->id]);
     }
 
     public function test_loan_search_returns_book_details_and_available_quantity(): void
@@ -556,6 +798,100 @@ class BibliotecaTest extends TestCase
             ->assertOk()->assertSee('Vencido')->assertSee('1');
     }
 
+    public function test_admin_can_open_an_editable_mailto_draft_for_an_overdue_loan(): void
+    {
+        $admin = User::factory()->create(['role' => User::ROLE_ADMIN]);
+        $voluntario = User::factory()->create();
+        $socio = $this->createMember([
+            'nombres' => 'Ana',
+            'apellidos' => 'Lectora',
+            'email' => 'ana@example.cl',
+        ]);
+        $libro = $this->createBookAndStock('Libro atrasado');
+        $prestamo = $this->createActiveLoan($socio, $libro, $voluntario, today()->subDays(3), 1);
+
+        $this->actingAs($admin)->get(route('admin.morosidad'))
+            ->assertOk()
+            ->assertSee('Enviar correo')
+            ->assertSee('Marcar como devuelto');
+
+        $response = $this->from(route('admin.morosidad'))
+            ->post(route('admin.prestamos.correo-morosidad', $prestamo));
+        $response->assertRedirect();
+        $location = $response->headers->get('Location');
+        $this->assertStringStartsWith('mailto:ana@example.cl?', $location);
+
+        parse_str((string) parse_url($location, PHP_URL_QUERY), $emailFields);
+        $this->assertSame('Aviso por préstamo vencido - Biblioteca La Insectaria', $emailFields['subject']);
+        $this->assertStringContainsString('Hola Ana Lectora', $emailFields['body']);
+        $this->assertStringContainsString('Libro: Libro atrasado', $emailFields['body']);
+        $this->assertStringContainsString('Unidades pendientes: 1', $emailFields['body']);
+        $this->assertStringEndsWith('Si crees que es un error, responde este correo.', $emailFields['body']);
+    }
+
+    public function test_admin_cannot_open_overdue_email_draft_when_member_email_is_invalid(): void
+    {
+        $admin = User::factory()->create(['role' => User::ROLE_ADMIN]);
+        $voluntario = User::factory()->create();
+        $socio = $this->createMember(['email' => 'correo-invalido']);
+        $prestamo = $this->createActiveLoan(
+            $socio,
+            $this->createBookAndStock('Libro atrasado'),
+            $voluntario,
+            today()->subDay(),
+        );
+
+        $this->actingAs($admin)->from(route('admin.morosidad'))
+            ->post(route('admin.prestamos.correo-morosidad', $prestamo))
+            ->assertRedirect(route('admin.morosidad'))
+            ->assertSessionHasErrors('email');
+    }
+
+    public function test_admin_can_mark_an_overdue_loan_as_returned(): void
+    {
+        $admin = User::factory()->create(['role' => User::ROLE_ADMIN]);
+        $voluntario = User::factory()->create();
+        $libro = $this->createBookAndStock('Libro devuelto', 2);
+        $prestamo = $this->createActiveLoan(
+            $this->createMember(),
+            $libro,
+            $voluntario,
+            today()->subDay(),
+        );
+
+        $this->actingAs($admin)
+            ->post(route('admin.prestamos.marcar-devuelto', $prestamo))
+            ->assertRedirect(route('admin.morosidad'))
+            ->assertSessionHas('status', 'El préstamo fue marcado como devuelto.');
+
+        $this->assertDatabaseHas('prestamos', [
+            'id' => $prestamo->id,
+            'estado' => 'devuelto',
+            'cantidad_devuelta' => 1,
+            'devuelto_por_user_id' => $admin->id,
+        ]);
+        $this->assertSame(2, $libro->fresh()->cantidad_disponible);
+        $this->actingAs($admin)->get(route('admin.morosidad'))->assertDontSee('Libro devuelto');
+    }
+
+    public function test_volunteer_cannot_see_or_use_overdue_management_actions(): void
+    {
+        $voluntario = User::factory()->create();
+        $prestamo = $this->createActiveLoan(
+            $this->createMember(['email' => 'ana@example.cl']),
+            $this->createBookAndStock('Libro atrasado'),
+            $voluntario,
+            today()->subDay(),
+        );
+
+        $this->actingAs($voluntario)->get(route('admin.morosidad'))
+            ->assertOk()
+            ->assertDontSee('Enviar correo')
+            ->assertDontSee('Marcar como devuelto');
+        $this->post(route('admin.prestamos.correo-morosidad', $prestamo))->assertForbidden();
+        $this->post(route('admin.prestamos.marcar-devuelto', $prestamo))->assertForbidden();
+    }
+
     public function test_us08_public_catalog_exposes_inventory_counts_without_personal_data(): void
     {
         $libro = $this->createBookAndStock('Catálogo público', 4);
@@ -571,6 +907,34 @@ class BibliotecaTest extends TestCase
         $this->assertStringNotContainsString('Dato privado', $response->getContent());
         $this->getJson('/api/catalogo?pagina=0')->assertStatus(422)
             ->assertJsonStructure(['mensaje', 'errores']);
+    }
+
+    public function test_public_catalog_returns_new_metadata_only_in_book_detail(): void
+    {
+        $libro = $this->createBookAndStock('Libro con metadatos', 3);
+        $libro->update([
+            'anio' => 2022,
+            'paginas' => 190,
+            'idioma' => 'Castellano',
+            'descripcion' => 'Descripción para la ficha.',
+            'portada_url' => 'https://example.com/metadatos.jpg',
+        ]);
+
+        $this->getJson('/api/catalogo?q=Libro con metadatos')
+            ->assertOk()
+            ->assertJsonPath('datos.0.titulo', $libro->titulo)
+            ->assertJsonMissingPath('datos.0.anio')
+            ->assertJsonMissingPath('datos.0.paginas')
+            ->assertJsonMissingPath('datos.0.idioma')
+            ->assertJsonMissingPath('datos.0.descripcion');
+
+        $this->getJson('/api/catalogo/'.$libro->id)
+            ->assertOk()
+            ->assertJsonPath('anio', 2022)
+            ->assertJsonPath('paginas', 190)
+            ->assertJsonPath('idioma', 'Castellano')
+            ->assertJsonPath('descripcion', 'Descripción para la ficha.')
+            ->assertJsonPath('portada_url', 'https://example.com/metadatos.jpg');
     }
 
     public function test_public_catalog_can_search_by_isbn(): void

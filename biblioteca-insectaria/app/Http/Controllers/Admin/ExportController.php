@@ -18,7 +18,7 @@ class ExportController extends Controller
 
         return response()->streamDownload(function () {
             $handle = fopen('php://output', 'wb');
-            fputcsv($handle, ['id', 'titulo', 'autor', 'isbn', 'editorial', 'anio', 'cantidad_total', 'cantidad_disponible', 'mueble', 'created_at', 'updated_at']);
+            fputcsv($handle, ['id', 'titulo', 'autor', 'isbn', 'editorial', 'anio', 'paginas', 'idioma', 'descripcion', 'portada_url', 'cantidad_total', 'cantidad_disponible', 'mueble', 'created_at', 'updated_at']);
 
             Libro::query()
                 ->with('mueble:id,nombre')
@@ -33,6 +33,10 @@ class ExportController extends Controller
                             $libro->isbn,
                             $libro->editorial,
                             $libro->anio,
+                            $libro->paginas,
+                            $libro->idioma,
+                            $libro->descripcion,
+                            $libro->portada_url,
                             $libro->cantidad_total,
                             $libro->cantidad_disponible,
                             $libro->mueble?->nombre ?? '',

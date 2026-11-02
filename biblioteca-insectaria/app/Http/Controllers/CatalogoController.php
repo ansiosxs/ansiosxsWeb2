@@ -93,8 +93,10 @@ class CatalogoController extends Controller
 
     public function mostrar(Libro $libro): JsonResponse
     {
-        $libro->load('mueble:id,nombre');
-        $libro->loadUnidadesPrestadas();
+        $libro = Libro::query()
+            ->with('mueble:id,nombre')
+            ->withUnidadesPrestadas()
+            ->findOrFail($libro->id);
 
         return response()->json([
             'id' => $libro->id,
@@ -103,6 +105,9 @@ class CatalogoController extends Controller
             'isbn' => $libro->isbn,
             'editorial' => $libro->editorial,
             'anio' => $libro->anio,
+            'paginas' => $libro->paginas,
+            'idioma' => $libro->idioma,
+            'descripcion' => $libro->descripcion,
             'portada_url' => $libro->portada_url,
             'mueble' => $libro->mueble?->nombre,
             'cantidad_total' => $libro->cantidad_total,

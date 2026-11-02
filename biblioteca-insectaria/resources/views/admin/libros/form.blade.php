@@ -5,7 +5,7 @@
 <form class="panel form-stack" method="post" enctype="multipart/form-data" action="{{ $libro->exists ? route('admin.libros.update', $libro) : route('admin.libros.store') }}" data-isbn-form data-book-image-form>
     @csrf @if ($libro->exists) @method('put') @endif
     <label>Título *<input name="titulo" value="{{ old('titulo', $libro->titulo) }}" required maxlength="255">@error('titulo')<span class="field-error">{{ $message }}</span>@enderror</label>
-    <label>Autor *<input name="autor" value="{{ old('autor', $libro->autor) }}" required maxlength="255">@error('autor')<span class="field-error">{{ $message }}</span>@enderror</label>
+    <label>Autor<input name="autor" value="{{ old('autor', $libro->autor) }}" maxlength="255">@error('autor')<span class="field-error">{{ $message }}</span>@enderror</label>
     <div class="grid-two">
         <label>ISBN
             <span class="loan-book-search">
@@ -22,7 +22,11 @@
             <button class="button button-secondary" type="button" data-isbn-cancelar>Cancelar escaneo</button>
         </div>
     </section>
-    <div class="grid-two"><label>Año<input name="anio" type="number" min="1000" max="9999" value="{{ old('anio', $libro->anio) }}"></label>
+    <div class="grid-two">
+        <label>Año de publicación<input name="anio" type="number" min="1000" max="9999" value="{{ old('anio', $libro->anio) }}"></label>
+        <label>Páginas<input name="paginas" type="number" min="1" max="65535" value="{{ old('paginas', $libro->paginas) }}"></label>
+        <label>Idioma<input name="idioma" value="{{ old('idioma', $libro->idioma) }}" maxlength="100"></label>
+        <label>Descripción<textarea name="descripcion" rows="4" maxlength="10000">{{ old('descripcion', $libro->descripcion) }}</textarea></label>
         <fieldset class="form-stack">
             <legend>Imagen</legend>
             <label>URL de imagen<input name="portada_url" type="url" value="{{ old('portada_url', $libro->portada_url) }}" data-book-image-url></label>

@@ -182,6 +182,11 @@ título y estos encabezados:
 titulo,autor,isbn,editorial,anio,portada_url,mueble,cantidad
 ```
 
+También se importan `paginas`, `idioma` y `descripcion` (en el CSV del
+inventario, `Año de publicación`, `Páginas` y `Descripción`). Estos datos y el
+año de publicación se muestran en la ficha individual del libro, no en las
+listas del catálogo.
+
 `titulo` y `autor` son obligatorios; `cantidad` es opcional y por defecto vale
 1. Si un mismo libro aparece en varias filas, las cantidades se acumulan.
 Los préstamos activos y socios deben migrarse por separado.
@@ -190,16 +195,34 @@ Los préstamos activos y socios deben migrarse por separado.
 php artisan biblioteca:importar-catalogo C:\ruta\inventario.csv
 ```
 
+También puedes usar el lanzador Python desde la carpeta del proyecto. Sin
+argumentos, toma `book_inventory_ -.csv` desde la carpeta padre:
+
+```powershell
+python scripts/importar_libros.py
+```
+
+Para elegir otro CSV o asignar el inventario a una estantería:
+
+```powershell
+python scripts/importar_libros.py "C:\ruta\inventario.csv" --mueble="Plan Lector"
+```
+
+El lanzador usa el comando Artisan y la conexión de base de datos de Laravel;
+no requiere instalar paquetes de Python ni poner credenciales en el script.
+Ejecuta antes las migraciones pendientes y respalda la base de datos.
+
 El comando admite CSV separado por coma o punto y coma, acumula existencias por
 libro y escribe un informe CSV de filas rechazadas en
 `storage/app/importacion-informe.csv`. También reconoce los encabezados del
-inventario `ID,ISBN,Título,Autor,Editorial,Cantidad,URL Imagen`; las filas sin
-título o autor quedan en el informe porque esos campos son obligatorios en la
-base de datos. Para importar ese inventario y asignar todos los libros
+inventario `ID,ISBN,Título,Autor,Editorial,Cantidad,URL Imagen,Año de
+publicación,Páginas,Idioma,Descripción`; las filas sin título o autor quedan
+en el informe porque esos campos son obligatorios en la base de datos. Para
+importar ese inventario y asignar todos los libros
 existentes e importados al mueble `Plan Lector`, ejecuta desde esta carpeta:
 
 ```powershell
-php artisan biblioteca:importar-catalogo "..\book_inventory.csv" --mueble="Plan Lector"
+python scripts/importar_libros.py "..\book_inventory_ -.csv" --mueble="Plan Lector"
 ```
 
 El comando acumula cantidades: ejecútalo una sola vez para cada inventario, o

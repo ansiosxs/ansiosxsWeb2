@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Libro;
 use App\Models\Mueble;
+use App\Support\AutorLibro;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -76,22 +77,26 @@ class LibroController extends Controller
     {
         $datos = $request->validate([
             'titulo' => ['required', 'string', 'max:255'],
-            'autor' => ['required', 'string', 'max:255'],
+            'autor' => ['nullable', 'string', 'max:255'],
             'cantidad_total' => ['required', 'integer', 'min:0', 'max:1000000'],
             'isbn' => ['nullable', 'string', 'max:20'],
             'editorial' => ['nullable', 'string', 'max:255'],
             'anio' => ['nullable', 'integer', 'between:1000,9999'],
+            'paginas' => ['nullable', 'integer', 'min:1', 'max:65535'],
+            'idioma' => ['nullable', 'string', 'max:100'],
+            'descripcion' => ['nullable', 'string', 'max:10000'],
             'portada_url' => ['nullable', 'url', 'max:255'],
             'portada' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
             'mueble_id' => ['nullable', 'exists:muebles,id'],
         ], [
             'titulo.required' => 'El título es obligatorio.',
-            'autor.required' => 'El autor es obligatorio.',
             'portada_url.url' => 'La portada debe ser una dirección web válida.',
             'portada.image' => 'La portada debe ser una imagen válida.',
             'portada.mimes' => 'La imagen debe estar en formato JPG, PNG o WebP.',
             'portada.max' => 'La imagen no puede superar los 5 MB.',
         ]);
+
+        $datos['autor'] = AutorLibro::normalizar($datos['autor'] ?? null);
 
         if ($request->hasFile('portada')) {
             $path = $request->file('portada')->storePublicly('book-covers', 'public');

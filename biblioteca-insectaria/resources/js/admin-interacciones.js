@@ -223,3 +223,63 @@ document.querySelectorAll('form[data-confirm]').forEach((form) => {
         if (!window.confirm(form.dataset.confirm)) event.preventDefault();
     });
 });
+
+document.querySelectorAll('form[data-busqueda-viva]').forEach((form) => {
+    const input = form.querySelector('[name="q"]');
+    const estado = form.querySelector('[data-busqueda-estado]');
+    const paginacion = document.querySelector('[data-paginacion-prestamos]');
+    let temporizador;
+    let controlador;
+
+    async function cargar(url) {
+        controlador?.abort();
+        controlador = new AbortController();
+        estado.textContent = 'Buscando…';
+        url.searchParams.set('q', input.value.trim());
+
+        try {
+            const response = await fetch(url, {
+                headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                signal: controlador.signal,
+            });
+
+            if (!response.ok) throw new Error('No se pudo actualizar la lista de préstamos.');
+
+            const resultado = await response.json();
+            document.querySelector('#filas-prestamos').outerHTML = resultado.rows;
+            paginacion.innerHTML = resultado.pagination;
+            window.history.replaceState({}, '', `${url.pathname}${url.search}`);
+            estado.textContent = '';
+        } catch (error) {
+            if (error.name === 'AbortError') return;
+            estado.textContent = error.message;
+            console.error('No se pudo realizar la búsqueda de préstamos:', error);
+        }
+    }
+
+    form.addEventListener('submit', (event) => {
+        event.preventDefault();
+        clearTimeout(temporizador);
+        cargar(new URL(form.action, window.location.origin));
+    });
+
+    input.addEventListener('input', () => {
+        clearTimeout(temporizador);
+        temporizador = setTimeout(() => cargar(new URL(form.action, window.location.origin)), 250);
+    });
+
+    form.querySelector('a')?.addEventListener('click', (event) => {
+        event.preventDefault();
+        input.value = '';
+        clearTimeout(temporizador);
+        cargar(new URL(form.action, window.location.origin));
+        input.focus();
+    });
+
+    paginacion.addEventListener('click', (event) => {
+        const enlace = event.target.closest('a');
+        if (!enlace) return;
+        event.preventDefault();
+        cargar(new URL(enlace.href));
+    });
+});

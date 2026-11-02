@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\AnuncioController;
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\ExportController;
 use App\Http\Controllers\Admin\LibroController;
 use App\Http\Controllers\Admin\LogController;
 use App\Http\Controllers\Admin\MuebleController;
@@ -45,6 +46,9 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'log.user.action'])-
     Route::get('prestamos/libros', [PrestamoController::class, 'buscarLibros'])->name('prestamos.libros');
     Route::post('prestamos', [PrestamoController::class, 'store'])->name('prestamos.store');
     Route::post('prestamos/{prestamo}/devolver', [PrestamoController::class, 'devolver'])->name('prestamos.devolver');
+    Route::get('prestamos/{prestamo}/editar', [PrestamoController::class, 'editar'])->name('prestamos.editar');
+    Route::put('prestamos/{prestamo}', [PrestamoController::class, 'update'])->name('prestamos.update');
+    Route::delete('prestamos/{prestamo}', [PrestamoController::class, 'destroy'])->name('prestamos.destroy');
     Route::get('morosidad', [PrestamoController::class, 'morosidad'])->name('morosidad');
 
     Route::get('estanterias', [MuebleController::class, 'index'])->name('estanterias.index');
@@ -60,7 +64,9 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'log.user.action'])-
     Route::post('reportes', [VolunteerReportController::class, 'store'])->name('reportes.store');
 });
 
-Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->group(function () {
+Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin', 'log.user.action'])->group(function () {
+    Route::post('prestamos/{prestamo}/correo-morosidad', [PrestamoController::class, 'correoMorosidad'])->name('prestamos.correo-morosidad');
+    Route::post('prestamos/{prestamo}/marcar-devuelto', [PrestamoController::class, 'marcarComoDevuelto'])->name('prestamos.marcar-devuelto');
     Route::resource('usuarios', UserController::class)->except(['show']);
     Route::post('usuarios/{usuario}/estado', [UserController::class, 'toggleStatus'])->name('usuarios.toggle-status');
     Route::get('logs', [LogController::class, 'index'])->name('logs.index');
@@ -73,10 +79,10 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->grou
     Route::put('turnos/{turno}/actividades/{actividad}', [TurnoController::class, 'actualizarActividad'])->whereNumber(['turno', 'actividad'])->name('turnos.actividades.update');
     Route::delete('turnos/{turno}/actividades/{actividad}', [TurnoController::class, 'eliminarActividad'])->whereNumber(['turno', 'actividad'])->name('turnos.actividades.destroy');
     Route::put('reportes/{reporte}/estado', [VolunteerReportController::class, 'actualizarEstado'])->whereNumber('reporte')->name('reportes.estado');
-    Route::get('exportar/libros', [\App\Http\Controllers\Admin\ExportController::class, 'libros'])->name('exportar.libros');
-    Route::get('exportar/socios', [\App\Http\Controllers\Admin\ExportController::class, 'socios'])->name('exportar.socios');
-    Route::get('exportar/prestamos', [\App\Http\Controllers\Admin\ExportController::class, 'prestamos'])->name('exportar.prestamos');
-    Route::get('exportar/todo', [\App\Http\Controllers\Admin\ExportController::class, 'todo'])->name('exportar.todo');
+    Route::get('exportar/libros', [ExportController::class, 'libros'])->name('exportar.libros');
+    Route::get('exportar/socios', [ExportController::class, 'socios'])->name('exportar.socios');
+    Route::get('exportar/prestamos', [ExportController::class, 'prestamos'])->name('exportar.prestamos');
+    Route::get('exportar/todo', [ExportController::class, 'todo'])->name('exportar.todo');
 
     Route::resource('anuncios', AnuncioController::class)->except(['index', 'show']);
 

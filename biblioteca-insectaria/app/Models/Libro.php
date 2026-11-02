@@ -12,11 +12,26 @@ class Libro extends Model
 {
     use SoftDeletes;
 
-    protected $fillable = ['titulo', 'autor', 'isbn', 'editorial', 'anio', 'portada_url', 'mueble_id', 'cantidad_total'];
+    protected $fillable = [
+        'titulo',
+        'autor',
+        'isbn',
+        'editorial',
+        'anio',
+        'paginas',
+        'idioma',
+        'descripcion',
+        'portada_url',
+        'mueble_id',
+        'cantidad_total',
+    ];
 
     protected function casts(): array
     {
-        return ['cantidad_total' => 'integer'];
+        return [
+            'cantidad_total' => 'integer',
+            'paginas' => 'integer',
+        ];
     }
 
     public function prestamos(): HasMany

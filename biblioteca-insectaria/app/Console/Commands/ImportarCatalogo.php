@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Models\Libro;
 use App\Models\Mueble;
+use App\Support\AutorLibro;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
@@ -44,6 +45,10 @@ class ImportarCatalogo extends Command
         $aliases = [
             'título' => 'titulo',
             'url imagen' => 'portada_url',
+            'año de publicación' => 'anio',
+            'año de publicaciòn' => 'anio',
+            'páginas' => 'paginas',
+            'descripción' => 'descripcion',
         ];
         $headers = array_map(fn ($header) => $aliases[$header] ?? $header, $headers);
         if (array_diff(['titulo', 'autor'], $headers)) {
@@ -95,14 +100,18 @@ class ImportarCatalogo extends Command
             }
 
             $row = array_combine($headers, array_pad(array_slice($values, 0, count($headers)), count($headers), null));
-            $row = array_map(fn ($value) => is_string($value) ? trim($value) : $value, $row);
+            $row = array_map(fn ($value) => is_string($value) ? (trim($value) === '' ? null : trim($value)) : $value, $row);
+            $row['autor'] = AutorLibro::normalizar($row['autor'] ?? null);
             $row['cantidad'] = ($row['cantidad'] ?? '') === '' ? 1 : $row['cantidad'];
             $errors = Validator::make($row, [
                 'titulo' => ['required', 'string', 'max:255'],
-                'autor' => ['required', 'string', 'max:255'],
+                'autor' => ['nullable', 'string', 'max:255'],
                 'isbn' => ['nullable', 'string', 'max:20'],
                 'editorial' => ['nullable', 'string', 'max:255'],
                 'anio' => ['nullable', 'integer', 'between:1000,9999'],
+                'paginas' => ['nullable', 'integer', 'min:1', 'max:65535'],
+                'idioma' => ['nullable', 'string', 'max:100'],
+                'descripcion' => ['nullable', 'string', 'max:10000'],
                 'portada_url' => ['nullable', 'url', 'max:255'],
                 'mueble' => ['nullable', 'string', 'max:255'],
                 'cantidad' => ['required', 'integer', 'min:0', 'max:1000000'],
@@ -136,12 +145,28 @@ class ImportarCatalogo extends Command
                         'isbn' => $row['isbn'] ?? null,
                         'editorial' => $row['editorial'] ?? null,
                         'anio' => $row['anio'] ?? null,
+                        'paginas' => $row['paginas'] ?? null,
+                        'idioma' => $row['idioma'] ?? null,
+                        'descripcion' => $row['descripcion'] ?? null,
                         'portada_url' => $row['portada_url'] ?? null,
                         'mueble_id' => $mueble?->id,
                         'cantidad_total' => 0,
                     ]);
-                } elseif ($mueble && $libro->mueble_id !== $mueble->id) {
-                    $libro->update(['mueble_id' => $mueble->id]);
+                } else {
+                    $actualizaciones = array_filter([
+                        'anio' => $row['anio'] ?? null,
+                        'paginas' => $row['paginas'] ?? null,
+                        'idioma' => $row['idioma'] ?? null,
+                        'descripcion' => $row['descripcion'] ?? null,
+                    ], fn ($value) => $value !== null && $value !== '');
+
+                    if ($mueble && $libro->mueble_id !== $mueble->id) {
+                        $actualizaciones['mueble_id'] = $mueble->id;
+                    }
+
+                    if ($actualizaciones !== []) {
+                        $libro->update($actualizaciones);
+                    }
                 }
 
                 $libro->increment('cantidad_total', (int) $row['cantidad']);
