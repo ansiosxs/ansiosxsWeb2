@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\TurnoSchedule;
+use App\Models\User;
 use Illuminate\Support\Facades\DB;
 
 class TurnoScheduler
@@ -18,73 +19,83 @@ class TurnoScheduler
                 ->get();
             $availabilities = $schedule->availabilities()
                 ->with('volunteer')
+                ->where('participates', true)
                 ->whereHas('volunteer', fn ($query) => $query
-                    ->where('role', 'voluntario')
+                    ->where('role', User::ROLE_VOLUNTARIO)
                     ->where('activo', true))
                 ->get();
 
-            $eligibleByDay = [];
-            $daysByAvailabilityCount = [];
-            $availableDaysCount = [];
+            $eligibleDaysByVolunteer = [];
+            $requestedTurns = [];
+            $dayLoads = array_fill_keys($days->modelKeys(), 0);
+            $dayDates = $days->mapWithKeys(fn ($day) => [$day->id => $day->date->toDateString()])->all();
+            foreach ($days as $day) {
+                foreach ($availabilities as $availability) {
+                    if ($this->isAvailable($availability, $day->date->toDateString(), $day->date->dayOfWeekIso)) {
+                        $eligibleDaysByVolunteer[$availability->user_id][] = $day->id;
+                    }
+                }
+            }
 
-            foreach ($availabilities as $availability) {
-                $availableDaysCount[$availability->user_id] = 0;
+            $volunteerTotal = $availabilities->count();
+            $rotation = $volunteerTotal > 0 ? (($schedule->year * 12 + $schedule->month) % $volunteerTotal) : 0;
+            $tieBreakRank = [];
+            foreach ($availabilities->values() as $rank => $availability) {
+                $tieBreakRank[$availability->user_id] = ($rank - $rotation + $volunteerTotal) % $volunteerTotal;
+                $requestedTurns[$availability->user_id] = $availability->monthly_turns;
+            }
+
+            $orderedVolunteers = $availabilities->sort(function ($first, $second) use ($eligibleDaysByVolunteer, $requestedTurns, $tieBreakRank) {
+                return [
+                    count($eligibleDaysByVolunteer[$first->user_id] ?? []) / max(1, $requestedTurns[$first->user_id]),
+                    $tieBreakRank[$first->user_id],
+                ] <=> [
+                    count($eligibleDaysByVolunteer[$second->user_id] ?? []) / max(1, $requestedTurns[$second->user_id]),
+                    $tieBreakRank[$second->user_id],
+                ];
+            });
+
+            $assignments = array_fill_keys($days->modelKeys(), []);
+            $assignedCounts = array_fill_keys(array_keys($requestedTurns), 0);
+            foreach ($orderedVolunteers as $availability) {
+                $userId = $availability->user_id;
+                $eligibleDayIds = $eligibleDaysByVolunteer[$userId] ?? [];
+
+                for ($turn = 0; $turn < $requestedTurns[$userId]; $turn++) {
+                    $availableCandidates = array_values(array_filter(
+                        $eligibleDayIds,
+                        fn (int $dayId) => ! in_array($userId, $assignments[$dayId], true),
+                    ));
+                    usort($availableCandidates, fn (int $first, int $second) => [
+                        $dayLoads[$first],
+                        $dayDates[$first],
+                    ] <=> [
+                        $dayLoads[$second],
+                        $dayDates[$second],
+                    ]);
+                    $dayId = $availableCandidates[0] ?? null;
+
+                    if ($dayId === null) {
+                        break;
+                    }
+
+                    $assignments[$dayId][] = $userId;
+                    $dayLoads[$dayId]++;
+                    $assignedCounts[$userId]++;
+                }
             }
 
             foreach ($days as $day) {
-                $eligible = $availabilities
-                    ->filter(fn ($availability) => $this->isAvailable($availability, $day->date->toDateString(), $day->date->dayOfWeekIso))
-                    ->values();
-                $eligibleByDay[$day->id] = $eligible;
-                $daysByAvailabilityCount[$day->id] = $eligible->count();
-
-                foreach ($eligible as $availability) {
-                    $availableDaysCount[$availability->user_id]++;
-                }
-            }
-
-            $volunteerCounts = array_fill_keys(array_keys($availableDaysCount), 0);
-            $assignments = [];
-            $volunteerIds = array_keys($availableDaysCount);
-            sort($volunteerIds);
-            $volunteerTotal = count($volunteerIds);
-            $rotation = $volunteerTotal > 0 ? (($schedule->year * 12 + $schedule->month) % $volunteerTotal) : 0;
-            $tieBreakRank = [];
-            foreach ($volunteerIds as $rank => $userId) {
-                $tieBreakRank[$userId] = ($rank - $rotation + $volunteerTotal) % $volunteerTotal;
-            }
-            $orderedDays = $days->sortBy(fn ($day) => [$daysByAvailabilityCount[$day->id], $day->date->toDateString()]);
-
-            foreach ($orderedDays as $day) {
-                $candidates = $eligibleByDay[$day->id]
-                    ->sort(function ($first, $second) use ($volunteerCounts, $availableDaysCount, $tieBreakRank) {
-                        $firstCount = $volunteerCounts[$first->user_id] ?? 0;
-                        $secondCount = $volunteerCounts[$second->user_id] ?? 0;
-
-                        return [
-                            $firstCount,
-                            $availableDaysCount[$first->user_id],
-                            $tieBreakRank[$first->user_id],
-                        ] <=> [
-                            $secondCount,
-                            $availableDaysCount[$second->user_id],
-                            $tieBreakRank[$second->user_id],
-                        ];
-                    })
-                    ->take($schedule->volunteers_per_day)
-                    ->pluck('user_id')
-                    ->all();
-
-                $day->volunteers()->syncWithPivotValues($candidates, ['assigned_by' => $schedule->created_by]);
-                $assignments[$day->id] = $candidates;
-
-                foreach ($candidates as $userId) {
-                    $volunteerCounts[$userId]++;
-                }
+                $day->volunteers()->syncWithPivotValues(
+                    $assignments[$day->id],
+                    ['assigned_by' => $schedule->created_by],
+                );
             }
 
             return [
-                'understaffed_days' => $days->filter(fn ($day) => count($assignments[$day->id] ?? []) < $schedule->volunteers_per_day)->count(),
+                'underassigned_volunteers' => $availabilities->filter(
+                    fn ($availability) => ($assignedCounts[$availability->user_id] ?? 0) < $availability->monthly_turns,
+                )->count(),
                 'assigned' => array_sum(array_map('count', $assignments)),
             ];
         });

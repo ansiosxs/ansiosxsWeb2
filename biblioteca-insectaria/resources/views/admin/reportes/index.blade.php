@@ -1,12 +1,12 @@
 @extends('layouts.admin')
-@section('title', 'Informes')
+@section('title', 'Reportes')
 @section('content')
-<div class="page-heading"><div><p class="eyebrow">Seguimiento administrativo</p><h2>Informes de voluntarios</h2><p class="muted">Comunica situaciones o necesidades de la biblioteca para que el administrador pueda hacer seguimiento.</p></div></div>
+<div class="page-heading"><div><p class="eyebrow">Seguimiento administrativo</p><h2>Reportes de la biblioteca</h2><p class="muted">Comunica situaciones o necesidades de la biblioteca para que administración pueda hacer seguimiento.</p></div></div>
 
-@if (auth()->user()->isVolunteer())
+@if (auth()->user()->isVolunteer() || auth()->user()->isAdmin())
     <form class="panel form-stack mb-6" method="post" action="{{ route('admin.reportes.store') }}">
         @csrf
-        <h3>Enviar un informe</h3>
+        <h3>Ingresar un reporte</h3>
         <div class="grid-two">
             <label>Asunto *<input name="title" maxlength="160" value="{{ old('title') }}" required></label>
             <label>Categoría *<select name="category" required>
@@ -17,12 +17,12 @@
             </select></label>
         </div>
         <label>Descripción *<textarea name="description" rows="5" maxlength="5000" required>{{ old('description') }}</textarea></label>
-        <button class="button" type="submit">Enviar informe</button>
+        <button class="button" type="submit">Ingresar reporte</button>
     </form>
 @endif
 
 <section class="panel">
-    <h3>{{ auth()->user()->isAdmin() ? 'Informes recibidos' : 'Mis informes' }}</h3>
+    <h3>{{ auth()->user()->isAdmin() ? 'Reportes recibidos' : 'Mis reportes' }}</h3>
     <div class="space-y-4">
         @forelse ($reportes as $reporte)
             <article class="rounded-xl border-2 border-[#e7e0d8] p-4">
@@ -50,7 +50,7 @@
                 @endif
             </article>
         @empty
-            <p>No hay informes para mostrar.</p>
+            <p>No hay reportes para mostrar.</p>
         @endforelse
     </div>
     {{ $reportes->links() }}

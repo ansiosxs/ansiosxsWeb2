@@ -15,22 +15,36 @@
   function validate(data) {
     if (!data.name.trim()) {
       fail('Error de validación', 'Por favor, ingresa tu nombre completo.');
+      form.elements.name.setAttribute('aria-invalid', 'true');
+      form.elements.name.focus();
       return false;
     }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email.trim())) {
       fail('Error de validación', 'Por favor, ingresa un email válido.');
+      form.elements.email.setAttribute('aria-invalid', 'true');
+      form.elements.email.focus();
       return false;
     }
     if (!data.subject) {
       fail('Error de validación', 'Por favor, selecciona un asunto.');
+      form.elements.subject.setAttribute('aria-invalid', 'true');
+      form.elements.subject.focus();
       return false;
     }
     if (data.message.trim().length < 10) {
       fail('Error de validación', 'Por favor, escribe un mensaje de al menos 10 caracteres.');
+      form.elements.message.setAttribute('aria-invalid', 'true');
+      form.elements.message.focus();
       return false;
     }
     return true;
   }
+
+  form.addEventListener('input', function (event) {
+    if (event.target.matches('[aria-invalid="true"]')) {
+      event.target.removeAttribute('aria-invalid');
+    }
+  });
 
   function setLoading(loading) {
     submitBtn.disabled = loading;
@@ -51,6 +65,10 @@
       message: fields.message.value,
       newsletter: fields.newsletter.checked ? 'Sí' : 'No'
     };
+
+    form.querySelectorAll('[aria-invalid="true"]').forEach(function (field) {
+      field.removeAttribute('aria-invalid');
+    });
 
     if (!validate(data)) return;
     setLoading(true);

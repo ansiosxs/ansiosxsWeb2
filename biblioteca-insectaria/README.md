@@ -42,14 +42,15 @@ no debe subirse al hosting. Luego ejecuta:
 
 ```powershell
 php artisan migrate
+php artisan storage:link
 php artisan biblioteca:crear-voluntario
 npm run build
 php artisan serve --port=8001
 ```
 
-La migración más reciente consolida los ejemplares en una cantidad por libro y
-elimina la identificación individual; aplica `php artisan migrate --force` al
-actualizar una instalación existente.
+Las migraciones más recientes consolidan los ejemplares en una cantidad por
+libro y permiten crear cuentas pendientes de configuración; aplica
+`php artisan migrate --force` al actualizar una instalación existente.
 
 Abre `http://127.0.0.1:8001/login` e ingresa con el nombre o correo y la
 contraseña de la cuenta creada. Las pruebas automatizadas usan SQLite en memoria:
@@ -58,9 +59,11 @@ contraseña de la cuenta creada. Las pruebas automatizadas usan SQLite en memori
 php artisan test
 ```
 
-El comando para crear voluntarios solicita la contraseña de forma oculta y
-exige al menos 12 caracteres. No hay registro público de cuentas. También se
-puede crear el primer usuario con el seeder si se establecen temporalmente
+El comando para crear voluntarios solicita una contraseña provisional de forma
+oculta y exige al menos 12 caracteres; como en el panel, la persona registra
+su correo y contraseña definitiva al ingresar por primera vez. No hay registro
+público de cuentas. También se puede crear el primer usuario con el seeder si
+se establecen temporalmente
 `BIBLIOTECA_ADMIN_NOMBRE`, `BIBLIOTECA_ADMIN_EMAIL` y
 `BIBLIOTECA_ADMIN_PASSWORD` en el entorno antes de `php artisan db:seed`; el
 password se almacena con el cast `hashed` de Laravel.
@@ -84,6 +87,23 @@ conserva una copia en
 
 - Acceso de voluntariado, cierre de sesión y bloqueo de credenciales tras cinco
   intentos fallidos en un minuto.
+- Alta de voluntarios con nombre y contraseña provisional; en el primer ingreso
+  deben registrar su correo y elegir una contraseña definitiva antes de usar el
+  panel.
+- Rol Editor con las funciones de voluntariado y gestión de noticias; los
+  administradores también pueden crear, editar y eliminar noticias.
+- Noticias con imagen opcional y editor visual HTML seguro en sus textos y en
+  los anuncios (negrita, cursiva, encabezados, citas, enlaces, listas,
+  deshacer/rehacer y pegar con formato). En una cita, Enter vuelve al párrafo
+  normal y Ctrl+Enter inserta un salto de línea. La API pública de solo lectura
+  de noticias está disponible para `../web-estatica/noticias.html`; cada
+  noticia también tiene una página HTML pública con metadatos Open Graph,
+  Twitter y Schema.org para compartir e indexar el artículo.
+- Administración de enlaces públicos para `../web-estatica/enlaces.html`.
+  Editores y administradores pueden crear, ordenar, activar, ocultar y eliminar
+  enlaces; la API pública solo devuelve los activos y acepta direcciones HTTP
+  y HTTPS. Incluye enlaces iniciales organizados por sección, visibles como
+  pendientes hasta que se les agregue una dirección.
 - CRUD de libros con inventario por cantidades, estanterías y anuncios.
 - Socios con RUN chileno validado/normalizado, teléfono celular chileno
   normalizado, inscripción y renovación anual.
@@ -95,16 +115,20 @@ conserva una copia en
   (localhost también funciona).
 - Devoluciones parciales por préstamo, días de atraso, lista de morosidad, lista telefónica y
   recordatorios de correo registrados para no repetirlos.
-- Portal público Vue, API de catálogo sin información de socios, anuncios por
-  fecha, búsqueda paginada y caché de la última consulta
+- Portal público Vue, API de catálogo sin información de socios, búsqueda
+  paginada y caché de la última consulta. Los anuncios vigentes se muestran
+  en el resumen administrativo y como avisos flotantes cerrables, no en el
+  catálogo público.
   para uso sin conexión.
 - Borradores locales y reintento visible ante pérdida de red o errores 5xx en
   los formularios de préstamo/devolución. Las escrituras no se almacenan en el
   service worker ni se envían en segundo plano.
 - Resumen estadístico agregado sin exponer fichas individuales de socios.
-- Calendarios mensuales de voluntariado con disponibilidad por día habitual y
-  excepciones por fecha, propuesta de asignación equilibrada, edición manual,
-  publicación y descarga de imagen PNG para compartir.
+- Turnos mensuales con una lista administrable de voluntarios habilitados,
+  participación por mes, días preferidos de lunes a viernes y cantidad de
+  turnos mensual (2 por defecto). La propuesta asigna esa cantidad de días por
+  participante; el borrador y sus asignaciones se crean automáticamente el
+  último día del mes para el mes siguiente, copiando la participación anterior.
 - Actividades con notas de convocatoria y reportes privados de voluntarios
   que administración puede marcar como pendientes, en proceso o resueltos.
 
@@ -113,6 +137,7 @@ conserva una copia en
 | Variable | Uso |
 | --- | --- |
 | `APP_ENV`, `APP_DEBUG`, `APP_KEY`, `APP_URL` | Entorno, modo depuración, clave generada y URL HTTPS. |
+| `FRONTEND_URL` | Origen del sitio estático y autorizado para consultar el API público; por defecto `http://127.0.0.1:8002` en local y `https://www.ansiosxs.cl` en otros entornos. |
 | `APP_TIMEZONE` | Zona horaria; por defecto `America/Santiago`. |
 | `APP_LOCALE` | Idioma; por defecto `es`. |
 | `DB_*` | Conexión MySQL del hosting. |
@@ -158,6 +183,9 @@ No subas `.env` al repositorio ni habilites `APP_DEBUG` en producción.
    HTTPS, una `APP_KEY` propia, credenciales MySQL y SMTP. Fuerza HTTPS desde
    Ferozo, define `SESSION_SECURE_COOKIE=true` y verifica escritura en
    `storage/` y `bootstrap/cache/`.
+   Define `APP_URL=https://biblioteca.ansiosxs.cl` y
+   `FRONTEND_URL=https://www.ansiosxs.cl` para la API de noticias. Ejecuta
+   `php artisan storage:link` para publicar las imágenes subidas desde el panel.
 6. Crea la cuenta inicial con `php artisan biblioteca:crear-voluntario` si
    Ferozo ofrece terminal. Si no ofrece terminal, ejecuta localmente
    `php artisan biblioteca:crear-voluntario --sql`; ingresa nombre, correo y
@@ -165,10 +193,12 @@ No subas `.env` al repositorio ni habilites `APP_DEBUG` en producción.
    en phpMyAdmin sobre la base de producción. El comando genera un hash Bcrypt
    y no crea esa cuenta en tu base local. No guardes ni compartas la contraseña
    en un archivo ni expongas una ruta de registro temporal.
-7. Para recordatorios, configura una tarea cron diaria a las 09:00 que ejecute
-   `php /ruta/biblioteca-insectaria/artisan schedule:run`. Si el plan no permite
-   cron, el panel conserva la lista de contactos para llamadas y los
-   recordatorios automáticos no se enviarán.
+7. Configura una tarea cron cada minuto que ejecute
+   `php /ruta/biblioteca-insectaria/artisan schedule:run`. Laravel ejecutará los
+   recordatorios diarios a las 09:00 y creará el borrador de turnos siguiente
+   el último día de cada mes a las 23:50. El comando de turnos también puede
+   ejecutarse manualmente con `php artisan turnos:crear-borrador-siguiente`.
+   Si el plan no permite cron, los procesos programados no se ejecutarán.
 8. Respaldar la base antes de cada actualización. Para desplegar cambios,
    compila primero `public/build/` en local y sube por FTP solo los archivos
    actualizados y el resultado compilado.
@@ -234,6 +264,9 @@ del informe antes de retirar el Excel/cuaderno original.
 - `GET /`: portal público de consulta.
 - `GET /api/catalogo?q=...&pagina=1`: catálogo paginado.
 - `GET /api/catalogo/{id}`: ficha pública de libro.
+- `GET https://biblioteca.ansiosxs.cl/api/noticias`: noticias públicas paginadas.
+- `GET https://biblioteca.ansiosxs.cl/api/noticias/{id}`: noticia pública.
+- `GET https://biblioteca.ansiosxs.cl/api/enlaces`: enlaces públicos activos, ordenados manualmente.
 - `GET /login`: acceso voluntariado.
 - `/admin`: panel y operaciones autenticadas.
 

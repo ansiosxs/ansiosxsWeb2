@@ -25,10 +25,10 @@
                 @forelse ($usuarios as $usuario)
                     <tr class="border-b border-[#f1ece5] align-top">
                         <td class="px-3 py-3 font-semibold text-[#35234f]">{{ $usuario->name }}</td>
-                        <td class="px-3 py-3">{{ $usuario->email }}</td>
+                        <td class="px-3 py-3">{{ $usuario->email ?: 'Pendiente de configurar' }}</td>
                         <td class="px-3 py-3">
                             <span class="rounded-full bg-brand-100 px-2 py-1 text-xs font-bold uppercase tracking-wide text-brand-900">
-                                {{ $usuario->role === 'admin' ? 'Administrador' : 'Voluntario' }}
+                                {{ $usuario->role === 'admin' ? 'Administrador' : ($usuario->role === \App\Models\User::ROLE_EDITOR ? 'Editor' : 'Voluntario') }}
                             </span>
                         </td>
                         <td class="px-3 py-3">

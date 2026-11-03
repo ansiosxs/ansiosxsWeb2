@@ -13,36 +13,43 @@
             <input id="name" name="name" type="text" value="{{ old('name', $usuario->name) }}" required>
         </div>
 
-        <div>
-            <label for="email">Correo electrónico</label>
-            <input id="email" name="email" type="email" value="{{ old('email', $usuario->email) }}" required>
-        </div>
+        @if (isset($usuario->id))
+            <div>
+                <label for="email">Correo electrónico</label>
+                <input id="email" name="email" type="email" maxlength="254" value="{{ old('email', $usuario->email) }}" required>
+            </div>
+
+            <div>
+                <label for="role">Rol</label>
+                <select id="role" name="role" required>
+                    <option value="{{ \App\Models\User::ROLE_VOLUNTARIO }}" @selected(old('role', $usuario->role ?? \App\Models\User::ROLE_VOLUNTARIO) === \App\Models\User::ROLE_VOLUNTARIO)>Voluntario</option>
+                    <option value="{{ \App\Models\User::ROLE_EDITOR }}" @selected(old('role', $usuario->role ?? \App\Models\User::ROLE_VOLUNTARIO) === \App\Models\User::ROLE_EDITOR)>Editor</option>
+                    <option value="{{ \App\Models\User::ROLE_ADMIN }}" @selected(old('role', $usuario->role ?? \App\Models\User::ROLE_VOLUNTARIO) === \App\Models\User::ROLE_ADMIN)>Administrador</option>
+                </select>
+            </div>
+
+            <div>
+                <label for="activo">Estado</label>
+                <select id="activo" name="activo">
+                    <option value="1" @selected(old('activo', $usuario->activo ?? true) == true)>Activo</option>
+                    <option value="0" @selected(old('activo', $usuario->activo ?? true) == false)>Dado de baja</option>
+                </select>
+            </div>
+        @else
+            <p class="muted">La persona completará su correo y contraseña definitiva al ingresar por primera vez. Las cuentas nuevas se crean como voluntarias.</p>
+        @endif
 
         <div>
-            <label for="role">Rol</label>
-            <select id="role" name="role" required>
-                <option value="{{ \App\Models\User::ROLE_VOLUNTARIO }}" @selected(old('role', $usuario->role ?? \App\Models\User::ROLE_VOLUNTARIO) === \App\Models\User::ROLE_VOLUNTARIO)>Voluntario</option>
-                <option value="{{ \App\Models\User::ROLE_ADMIN }}" @selected(old('role', $usuario->role ?? \App\Models\User::ROLE_VOLUNTARIO) === \App\Models\User::ROLE_ADMIN)>Administrador</option>
-            </select>
+            <label for="password">{{ isset($usuario->id) ? 'Nueva contraseña (opcional)' : 'Contraseña provisional' }}</label>
+            <input id="password" name="password" type="password" minlength="8" {{ isset($usuario->id) ? '' : 'required' }} autocomplete="new-password">
         </div>
 
-        <div>
-            <label for="activo">Estado</label>
-            <select id="activo" name="activo">
-                <option value="1" @selected(old('activo', $usuario->activo ?? true) == true)>Activo</option>
-                <option value="0" @selected(old('activo', $usuario->activo ?? true) == false)>Dado de baja</option>
-            </select>
-        </div>
-
-        <div>
-            <label for="password">{{ isset($usuario->id) ? 'Nueva contraseña (opcional)' : 'Contraseña' }}</label>
-            <input id="password" name="password" type="password" {{ isset($usuario->id) ? '' : 'required' }} autocomplete="new-password">
-        </div>
-
-        <div>
-            <label for="password_confirmation">Confirmar contraseña</label>
-            <input id="password_confirmation" name="password_confirmation" type="password" autocomplete="new-password">
-        </div>
+        @if (isset($usuario->id))
+            <div>
+                <label for="password_confirmation">Confirmar contraseña</label>
+                <input id="password_confirmation" name="password_confirmation" type="password" autocomplete="new-password">
+            </div>
+        @endif
 
         <div class="flex flex-wrap gap-3">
             <button class="button" type="submit">{{ isset($usuario->id) ? 'Guardar cambios' : 'Crear usuario' }}</button>

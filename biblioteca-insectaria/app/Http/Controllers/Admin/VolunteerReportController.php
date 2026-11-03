@@ -29,7 +29,8 @@ class VolunteerReportController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        abort_unless($request->user()->isVolunteer() && $request->user()->activo, 403);
+        $user = $request->user();
+        abort_unless(($user->isVolunteer() || $user->isAdmin()) && $user->activo, 403);
 
         $data = $request->validate([
             'title' => ['required', 'string', 'max:160'],
@@ -39,11 +40,11 @@ class VolunteerReportController extends Controller
 
         VolunteerReport::create([
             ...$data,
-            'reported_by' => $request->user()->id,
+            'reported_by' => $user->id,
             'status' => 'open',
         ]);
 
-        return redirect()->route('admin.reportes.index')->with('status', 'Informe enviado al administrador.');
+        return redirect()->route('admin.reportes.index')->with('status', 'Reporte enviado correctamente.');
     }
 
     public function actualizarEstado(Request $request, VolunteerReport $reporte): RedirectResponse
@@ -61,6 +62,6 @@ class VolunteerReportController extends Controller
             'resolved_at' => $resolved ? now() : null,
         ]);
 
-        return redirect()->route('admin.reportes.index')->with('status', $resolved ? 'Informe marcado como resuelto.' : 'Estado del informe actualizado.');
+        return redirect()->route('admin.reportes.index')->with('status', $resolved ? 'Reporte marcado como resuelto.' : 'Estado del reporte actualizado.');
     }
 }

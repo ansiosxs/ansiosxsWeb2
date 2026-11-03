@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\TurnoAvailability;
 use App\Models\TurnoSchedule;
+use App\Models\TurnoVolunteerProfile;
 use App\Models\User;
 use App\Models\VolunteerReport;
 use App\Services\TurnoScheduler;
@@ -17,19 +18,18 @@ class TurnosTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_admin_creates_a_monthly_draft_with_weekdays_and_configurable_coverage(): void
+    public function test_admin_creates_a_monthly_draft_with_weekdays(): void
     {
         $admin = User::factory()->create(['role' => User::ROLE_ADMIN]);
 
         $this->actingAs($admin)->post(route('admin.turnos.store'), [
             'year' => 2026,
             'month' => 11,
-            'volunteers_per_day' => 3,
         ])->assertRedirect();
 
         $schedule = TurnoSchedule::query()->firstOrFail();
         $this->assertSame('draft', $schedule->status);
-        $this->assertSame(3, $schedule->volunteers_per_day);
+        $this->assertSame(1, $schedule->volunteers_per_day);
         $this->assertSame(30, $schedule->days()->count());
         $this->assertDatabaseHas('turno_days', ['turno_schedule_id' => $schedule->id, 'date' => '2026-11-02 00:00:00']);
         $this->assertDatabaseHas('turno_days', ['turno_schedule_id' => $schedule->id, 'date' => '2026-11-07 00:00:00', 'is_open' => false]);
@@ -43,38 +43,127 @@ class TurnosTest extends TestCase
             ->assertSee('Editar fecha');
     }
 
-    public function test_volunteer_can_submit_weekday_preferences_and_specific_date_exceptions(): void
+    public function test_admin_can_save_roster_preferences_and_month_participation(): void
     {
         $admin = User::factory()->create(['role' => User::ROLE_ADMIN]);
         $volunteer = User::factory()->create(['role' => User::ROLE_VOLUNTARIO]);
         $schedule = $this->createSchedule($admin);
 
-        $this->actingAs($volunteer)->post(route('admin.turnos.disponibilidad', $schedule), [
-            'weekdays' => [1, 3],
-            'date_overrides' => [
-                '2026-11-02' => 'unavailable',
-                '2026-11-03' => 'available',
-                '2026-11-04' => 'default',
+        $this->actingAs($admin)
+            ->get(route('admin.turnos.show', $schedule))
+            ->assertOk()
+            ->assertSee('Voluntarios que pueden abrir')
+            ->assertSee(route('admin.usuarios.create'), false)
+            ->assertSee(route('admin.usuarios.edit', $volunteer), false)
+            ->assertSee(route('admin.usuarios.destroy', $volunteer), false)
+            ->assertSee('Agregar voluntario')
+            ->assertSee('Editar')
+            ->assertSee('Eliminar')
+            ->assertSee('Participa este mes')
+            ->assertSee($volunteer->name);
+
+        $this->put(route('admin.turnos.voluntarios.update', $schedule), [
+            'volunteers' => [
+                $volunteer->id => [
+                    'enabled' => 1,
+                    'participates' => 1,
+                    'weekdays' => [1, 3],
+                    'monthly_turns' => 4,
+                ],
             ],
         ])->assertRedirect(route('admin.turnos.show', $schedule));
 
-        $availability = TurnoAvailability::query()->firstOrFail();
+        $profile = TurnoVolunteerProfile::query()->where('user_id', $volunteer->id)->firstOrFail();
+        $this->assertTrue($profile->enabled);
+        $this->assertSame([1, 3], $profile->weekdays);
+        $this->assertSame(4, $profile->monthly_turns);
+
+        $availability = TurnoAvailability::query()->where('turno_schedule_id', $schedule->id)->firstOrFail();
         $this->assertSame([1, 3], $availability->weekdays);
-        $this->assertSame([
-            '2026-11-02' => 'unavailable',
-            '2026-11-03' => 'available',
-        ], $availability->date_overrides);
+        $this->assertTrue($availability->participates);
+        $this->assertSame(4, $availability->monthly_turns);
 
         $this->actingAs($volunteer)->get(route('admin.turnos.show', $schedule))
             ->assertOk()
-            ->assertSee('Indica tu disponibilidad');
+            ->assertDontSee('Voluntarios que pueden abrir');
+    }
+
+    public function test_admin_cannot_delete_volunteer_with_turno_history(): void
+    {
+        $admin = User::factory()->create(['role' => User::ROLE_ADMIN]);
+        $volunteer = User::factory()->create(['role' => User::ROLE_VOLUNTARIO]);
+        $schedule = $this->createSchedule($admin);
+
+        TurnoAvailability::create([
+            'turno_schedule_id' => $schedule->id,
+            'user_id' => $volunteer->id,
+            'weekdays' => [1],
+            'date_overrides' => [],
+            'participates' => true,
+            'monthly_turns' => 1,
+        ]);
+
+        $this->actingAs($admin)
+            ->from(route('admin.turnos.show', $schedule))
+            ->delete(route('admin.usuarios.destroy', $volunteer))
+            ->assertRedirect(route('admin.turnos.show', $schedule))
+            ->assertSessionHasErrors('usuario');
+
+        $this->assertDatabaseHas('users', ['id' => $volunteer->id]);
+    }
+
+    public function test_monthly_command_creates_next_draft_and_copies_participation(): void
+    {
+        $admin = User::factory()->create(['role' => User::ROLE_ADMIN]);
+        $volunteer = User::factory()->create(['role' => User::ROLE_VOLUNTARIO]);
+        TurnoVolunteerProfile::create([
+            'user_id' => $volunteer->id,
+            'enabled' => true,
+            'weekdays' => [1, 4],
+            'monthly_turns' => 3,
+        ]);
+        $previousSchedule = TurnoSchedule::create([
+            'year' => 2026,
+            'month' => 10,
+            'created_by' => $admin->id,
+            'status' => 'draft',
+        ]);
+        $previousSchedule->availabilities()->create([
+            'user_id' => $volunteer->id,
+            'weekdays' => [1, 4],
+            'date_overrides' => [],
+            'participates' => true,
+            'monthly_turns' => 3,
+        ]);
+        $this->travelTo(Carbon::parse('2026-10-31 23:50:00'));
+
+        $this->artisan('turnos:crear-borrador-siguiente')
+            ->expectsOutputToContain('noviembre 2026')
+            ->assertExitCode(0);
+
+        $schedule = TurnoSchedule::query()->where('year', 2026)->where('month', 11)->firstOrFail();
+        $availability = $schedule->availabilities()->where('user_id', $volunteer->id)->firstOrFail();
+        $this->assertSame(30, $schedule->days()->count());
+        $this->assertSame([1, 4], $availability->weekdays);
+        $this->assertTrue($availability->participates);
+        $this->assertSame(3, $availability->monthly_turns);
+        $this->assertSame(3, DB::table('turno_asignaciones')
+            ->join('turno_days', 'turno_days.id', '=', 'turno_asignaciones.turno_dia_id')
+            ->where('turno_days.turno_schedule_id', $schedule->id)
+            ->where('turno_asignaciones.user_id', $volunteer->id)
+            ->count());
+
+        $this->artisan('turnos:crear-borrador-siguiente')
+            ->expectsOutputToContain('ya existía')
+            ->assertExitCode(0);
+        $this->assertSame(1, TurnoSchedule::query()->where('year', 2026)->where('month', 11)->count());
     }
 
     public function test_scheduler_builds_a_fair_draft_and_admin_can_publish_it(): void
     {
         $admin = User::factory()->create(['role' => User::ROLE_ADMIN]);
         $volunteers = collect(range(1, 3))->map(fn () => User::factory()->create(['role' => User::ROLE_VOLUNTARIO]));
-        $schedule = $this->createSchedule($admin, 2);
+        $schedule = $this->createSchedule($admin);
 
         foreach ($volunteers as $volunteer) {
             TurnoAvailability::create([
@@ -82,21 +171,20 @@ class TurnosTest extends TestCase
                 'user_id' => $volunteer->id,
                 'weekdays' => [1, 2, 3, 4, 5],
                 'date_overrides' => [],
+                'participates' => true,
+                'monthly_turns' => 2,
             ]);
         }
 
         $result = app(TurnoScheduler::class)->generate($schedule);
-        $this->assertSame(0, $result['understaffed_days']);
+        $this->assertSame(0, $result['underassigned_volunteers']);
 
-        $counts = $schedule->days()->where('is_open', true)->withCount('volunteers')->get()->pluck('volunteers_count');
-        $this->assertSame(2, $counts->min());
-        $this->assertSame(2, $counts->max());
         $volunteerCounts = DB::table('turno_asignaciones')
             ->whereIn('turno_dia_id', $schedule->days()->select('id'))
             ->selectRaw('COUNT(*) as total')
             ->groupBy('user_id')
             ->pluck('total');
-        $this->assertLessThanOrEqual(1, $volunteerCounts->max() - $volunteerCounts->min());
+        $this->assertSame([2, 2, 2], $volunteerCounts->sort()->values()->all());
 
         $this->actingAs($admin)->post(route('admin.turnos.publicar', $schedule))
             ->assertRedirect(route('admin.turnos.show', $schedule));
@@ -110,7 +198,7 @@ class TurnosTest extends TestCase
             ->assertSee('2026', false);
     }
 
-    public function test_calendar_does_not_publish_when_an_open_day_is_understaffed(): void
+    public function test_calendar_does_not_publish_when_a_participant_lacks_monthly_turns(): void
     {
         $admin = User::factory()->create(['role' => User::ROLE_ADMIN]);
         $volunteer = User::factory()->create(['role' => User::ROLE_VOLUNTARIO]);
@@ -118,11 +206,15 @@ class TurnosTest extends TestCase
         TurnoAvailability::create([
             'turno_schedule_id' => $schedule->id,
             'user_id' => $volunteer->id,
-            'weekdays' => [1, 2, 3, 4, 5],
+            'weekdays' => [1],
             'date_overrides' => [],
+            'participates' => true,
+            'monthly_turns' => 2,
         ]);
+        $schedule->days()->whereDate('date', '!=', '2026-11-02')->update(['is_open' => false]);
 
-        app(TurnoScheduler::class)->generate($schedule);
+        $result = app(TurnoScheduler::class)->generate($schedule);
+        $this->assertSame(1, $result['underassigned_volunteers']);
         $this->actingAs($admin)->post(route('admin.turnos.publicar', $schedule))
             ->assertSessionHasErrors('publicar');
         $this->assertDatabaseHas('turno_schedules', ['id' => $schedule->id, 'status' => 'draft']);
@@ -132,7 +224,11 @@ class TurnosTest extends TestCase
     {
         $admin = User::factory()->create(['role' => User::ROLE_ADMIN]);
         $volunteer = User::factory()->create(['role' => User::ROLE_VOLUNTARIO]);
-        $schedule = $this->createSchedule($admin, 1);
+        $schedule = $this->createSchedule($admin);
+        $schedule->days()
+            ->whereDate('date', '!=', '2026-11-02')
+            ->whereDate('date', '!=', '2026-11-03')
+            ->update(['is_open' => false]);
         TurnoAvailability::create([
             'turno_schedule_id' => $schedule->id,
             'user_id' => $volunteer->id,
@@ -141,6 +237,8 @@ class TurnosTest extends TestCase
                 '2026-11-02' => 'unavailable',
                 '2026-11-03' => 'available',
             ],
+            'participates' => true,
+            'monthly_turns' => 1,
         ]);
 
         app(TurnoScheduler::class)->generate($schedule);
@@ -168,7 +266,19 @@ class TurnosTest extends TestCase
 
         $this->actingAs($admin)->get(route('admin.reportes.index'))
             ->assertOk()
+            ->assertSee('Reportes')
+            ->assertSee('Reportes de la biblioteca')
+            ->assertSee('Ingresar un reporte')
             ->assertSee('Luz quemada');
+        $this->actingAs($admin)->post(route('admin.reportes.store'), [
+            'title' => 'Estante por reparar',
+            'category' => 'Mantención',
+            'description' => 'El estante de la entrada está inestable.',
+        ])->assertRedirect(route('admin.reportes.index'));
+
+        $adminReport = VolunteerReport::query()->where('title', 'Estante por reparar')->firstOrFail();
+        $this->assertSame($admin->id, $adminReport->reported_by);
+
         $this->put(route('admin.reportes.estado', $report), ['status' => 'resolved'])
             ->assertRedirect(route('admin.reportes.index'));
 
@@ -185,6 +295,16 @@ class TurnosTest extends TestCase
         $volunteer = User::factory()->create(['role' => User::ROLE_VOLUNTARIO]);
         $schedule = $this->createSchedule($admin);
         $this->actingAs($volunteer)->get(route('admin.turnos.create'))->assertForbidden();
+        $this->put(route('admin.turnos.voluntarios.update', $schedule), [
+            'volunteers' => [
+                $volunteer->id => [
+                    'enabled' => 1,
+                    'participates' => 1,
+                    'weekdays' => [1],
+                    'monthly_turns' => 2,
+                ],
+            ],
+        ])->assertForbidden();
         $this->post(route('admin.turnos.actividades.store', $schedule), [
             'date' => '2026-11-07',
             'title' => 'Club de lectura',

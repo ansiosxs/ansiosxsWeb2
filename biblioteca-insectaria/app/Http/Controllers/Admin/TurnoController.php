@@ -7,11 +7,12 @@ use App\Models\TurnoActivity;
 use App\Models\TurnoAvailability;
 use App\Models\TurnoDay;
 use App\Models\TurnoSchedule;
+use App\Models\TurnoVolunteerProfile;
 use App\Models\User;
+use App\Services\TurnoScheduleFactory;
 use App\Services\TurnoScheduler;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
@@ -24,7 +25,10 @@ class TurnoController extends Controller
     {
         return view('admin.turnos.index', [
             'turnos' => TurnoSchedule::query()
-                ->withCount(['days', 'availabilities'])
+                ->withCount([
+                    'days',
+                    'availabilities' => fn ($query) => $query->where('participates', true),
+                ])
                 ->orderByDesc('year')
                 ->orderByDesc('month')
                 ->paginate(24),
@@ -50,93 +54,85 @@ class TurnoController extends Controller
                 'between:1,12',
                 Rule::unique('turno_schedules', 'month')->where(fn ($query) => $query->where('year', (int) $request->input('year'))),
             ],
-            'volunteers_per_day' => ['required', 'integer', 'between:1,255'],
-            'availability_closes_at' => ['nullable', 'date'],
         ]);
 
-        $schedule = DB::transaction(function () use ($data, $request) {
-            $schedule = TurnoSchedule::create([
-                ...$data,
-                'created_by' => $request->user()->id,
-                'status' => 'draft',
-            ]);
+        [$schedule] = app(TurnoScheduleFactory::class)->create(
+            (int) $data['year'],
+            (int) $data['month'],
+            $request->user(),
+        );
 
-            $date = Carbon::create($schedule->year, $schedule->month, 1)->startOfMonth();
-            $lastDay = $date->copy()->endOfMonth();
-            $days = [];
-
-            while ($date->lte($lastDay)) {
-                $days[] = ['date' => $date->toDateString(), 'is_open' => $date->isWeekday()];
-                $date->addDay();
-            }
-
-            $schedule->days()->createMany($days);
-
-            return $schedule;
-        });
-
-        return redirect()->route('admin.turnos.show', $schedule)->with('status', 'Calendario mensual creado. Ya se puede recibir disponibilidad.');
+        return redirect()->route('admin.turnos.show', $schedule)->with('status', 'Borrador mensual creado. Revisa participantes y preferencias antes de generar la propuesta.');
     }
 
     public function show(TurnoSchedule $turno): View
     {
-        $turno->load(['days.volunteers', 'activities']);
-        $user = auth()->user();
-        $availability = $turno->availabilities()->where('user_id', $user->id)->first();
-        $availabilityResponses = $user->isAdmin()
-            ? $turno->availabilities()->with('volunteer')->get()
-            : collect();
-        $canSubmitAvailability = $turno->status === 'draft'
-            && (! $turno->availability_closes_at || $turno->availability_closes_at->isFuture());
+        $turno->load(['days.volunteers', 'activities', 'availabilities.volunteer']);
         $volunteers = User::query()->where('role', User::ROLE_VOLUNTARIO)->where('activo', true)->orderBy('name')->get();
+        $profiles = TurnoVolunteerProfile::query()
+            ->whereIn('user_id', $volunteers->pluck('id'))
+            ->get()
+            ->keyBy('user_id');
 
         return view('admin.turnos.show', [
             'turno' => $turno,
-            'disponibilidad' => $availability,
-            'puedeResponder' => $canSubmitAvailability,
             'voluntarios' => $volunteers,
-            'disponibilidades' => $availabilityResponses,
+            'perfilesVoluntarios' => $profiles,
+            'disponibilidades' => $turno->availabilities->keyBy('user_id'),
             'actividadesPorFecha' => $turno->activities->groupBy(fn (TurnoActivity $activity) => $activity->date->toDateString()),
         ]);
     }
 
-    public function disponibilidad(Request $request, TurnoSchedule $turno): RedirectResponse
+    public function actualizarVoluntarios(Request $request, TurnoSchedule $turno): RedirectResponse
     {
-        $user = $request->user();
-        abort_unless($user->isVolunteer() && $user->activo, 403);
-        abort_unless($turno->status === 'draft', 403, 'Este calendario ya no recibe disponibilidad.');
-        abort_if($turno->availability_closes_at?->isPast(), 403, 'El plazo para indicar disponibilidad ya cerró.');
+        $this->requireAdmin();
+        abort_unless($turno->status === 'draft', 403, 'No se pueden cambiar los participantes de un calendario publicado.');
 
         $data = $request->validate([
-            'weekdays' => ['nullable', 'array'],
-            'weekdays.*' => ['required', 'integer', 'between:1,7'],
-            'date_overrides' => ['nullable', 'array'],
+            'volunteers' => ['nullable', 'array'],
+            'volunteers.*.enabled' => ['required', 'boolean'],
+            'volunteers.*.participates' => ['required', 'boolean'],
+            'volunteers.*.weekdays' => ['nullable', 'array'],
+            'volunteers.*.weekdays.*' => ['required', 'integer', 'between:1,5'],
+            'volunteers.*.monthly_turns' => ['required', 'integer', 'between:0,31'],
         ]);
 
-        $overrides = [];
-        foreach (($data['date_overrides'] ?? []) as $date => $value) {
-            if (! preg_match('/^\d{4}-\d{2}-\d{2}$/', (string) $date)
-                || ! checkdate((int) substr($date, 5, 2), (int) substr($date, 8, 2), (int) substr($date, 0, 4))
-                || (int) substr($date, 0, 4) !== $turno->year
-                || (int) substr($date, 5, 2) !== $turno->month
-                || ! in_array($value, ['default', 'available', 'unavailable'], true)) {
-                throw ValidationException::withMessages(['date_overrides' => 'Una de las excepciones no corresponde a una fecha válida de este mes.']);
+        $activeVolunteers = User::query()
+            ->where('role', User::ROLE_VOLUNTARIO)
+            ->where('activo', true)
+            ->get()
+            ->keyBy('id');
+
+        DB::transaction(function () use ($data, $activeVolunteers, $turno) {
+            foreach ($data['volunteers'] ?? [] as $userId => $volunteerData) {
+                $volunteer = $activeVolunteers->get((int) $userId);
+                abort_unless($volunteer, 422, 'La lista contiene una cuenta que no es voluntaria activa.');
+                $weekdays = array_values(array_unique(array_map('intval', $volunteerData['weekdays'] ?? [])));
+                $enabled = (bool) $volunteerData['enabled'];
+                $participates = $enabled && (bool) $volunteerData['participates'];
+
+                TurnoVolunteerProfile::query()->updateOrCreate(
+                    ['user_id' => $volunteer->id],
+                    [
+                        'enabled' => $enabled,
+                        'weekdays' => $weekdays,
+                        'monthly_turns' => (int) $volunteerData['monthly_turns'],
+                    ],
+                );
+
+                TurnoAvailability::query()->updateOrCreate(
+                    ['turno_schedule_id' => $turno->id, 'user_id' => $volunteer->id],
+                    [
+                        'weekdays' => $weekdays,
+                        'date_overrides' => [],
+                        'participates' => $participates,
+                        'monthly_turns' => (int) $volunteerData['monthly_turns'],
+                    ],
+                );
             }
+        });
 
-            if ($value !== 'default') {
-                $overrides[$date] = $value;
-            }
-        }
-
-        TurnoAvailability::query()->updateOrCreate(
-            ['turno_schedule_id' => $turno->id, 'user_id' => $user->id],
-            [
-                'weekdays' => array_values(array_unique(array_map('intval', $data['weekdays'] ?? []))),
-                'date_overrides' => $overrides,
-            ],
-        );
-
-        return redirect()->route('admin.turnos.show', $turno)->with('status', 'Tu disponibilidad quedó guardada.');
+        return redirect()->route('admin.turnos.show', $turno)->with('status', 'La lista de voluntarios, sus preferencias y su participación mensual quedaron guardadas.');
     }
 
     public function generar(TurnoSchedule $turno, TurnoScheduler $scheduler): RedirectResponse
@@ -144,13 +140,13 @@ class TurnoController extends Controller
         $this->requireAdmin();
         $result = $scheduler->generate($turno);
 
-        if ($result['understaffed_days'] > 0) {
+        if ($result['underassigned_volunteers'] > 0) {
             return redirect()->route('admin.turnos.show', $turno)
-                ->with('warning', "Se generó una propuesta, pero {$result['understaffed_days']} días no alcanzan la cobertura requerida. Ajusta manualmente o cambia el mínimo antes de publicar.");
+                ->with('warning', "Se generó una propuesta, pero {$result['underassigned_volunteers']} voluntarios no tienen suficientes fechas disponibles para completar sus turnos del mes. Revisa sus preferencias o ajusta la asignación manualmente.");
         }
 
         return redirect()->route('admin.turnos.show', $turno)
-            ->with('status', "Propuesta generada: {$result['assigned']} asignaciones distribuidas según disponibilidad y equidad mensual.");
+            ->with('status', "Propuesta generada: {$result['assigned']} turnos asignados según las preferencias y cantidades mensuales.");
     }
 
     public function actualizarDia(Request $request, TurnoSchedule $turno, TurnoDay $dia): RedirectResponse
@@ -186,15 +182,22 @@ class TurnoController extends Controller
         $this->requireAdmin();
         abort_unless($turno->status === 'draft', 403, 'El calendario ya está publicado.');
 
-        $understaffed = $turno->days()
-            ->where('is_open', true)
-            ->withCount('volunteers')
+        $assignedCounts = DB::table('turno_asignaciones')
+            ->join('turno_days', 'turno_days.id', '=', 'turno_asignaciones.turno_dia_id')
+            ->where('turno_days.turno_schedule_id', $turno->id)
+            ->select('turno_asignaciones.user_id')
+            ->selectRaw('COUNT(*) as assigned_count')
+            ->groupBy('turno_asignaciones.user_id')
+            ->pluck('assigned_count', 'user_id');
+        $underassigned = $turno->availabilities()
+            ->where('participates', true)
+            ->whereRaw('monthly_turns > ?', [0])
             ->get()
-            ->filter(fn (TurnoDay $day) => $day->volunteers_count < $turno->volunteers_per_day);
+            ->filter(fn (TurnoAvailability $availability) => $assignedCounts->get($availability->user_id, 0) < $availability->monthly_turns);
 
-        if ($understaffed->isNotEmpty()) {
+        if ($underassigned->isNotEmpty()) {
             return redirect()->route('admin.turnos.show', $turno)
-                ->withErrors(['publicar' => 'No se puede publicar: hay días abiertos bajo la cobertura mínima. Cierra esos días o asigna suficientes voluntarios.']);
+                ->withErrors(['publicar' => 'No se puede publicar: hay voluntarios participantes con menos turnos que los solicitados. Ajusta la cantidad, las preferencias o sus asignaciones.']);
         }
 
         $turno->update(['status' => 'published', 'published_at' => now()]);

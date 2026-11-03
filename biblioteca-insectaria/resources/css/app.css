@@ -328,7 +328,12 @@ th { background: #fff0b3; color: var(--purple-dark); font-size: .85rem; }
 .announcements { max-width: 50rem; margin: 0 auto 1rem; }
 .announcement { background: #fff9da; }
 .announcement h2 { margin-bottom: .4rem; }
-.announcement p { white-space: pre-line; margin-bottom: 0; }
+.announcement-content p { white-space: pre-line; margin-bottom: .65rem; }
+.announcement-content > :last-child { margin-bottom: 0; }
+.announcement-content h2, .announcement-content h3 { margin: .8rem 0 .35rem; color: var(--purple); }
+.announcement-content blockquote { margin: .75rem 0; padding: .35rem .85rem; border-left: 4px solid #ac7fff; background: #f7f2ff; color: #514b58; }
+.announcement-content ul, .announcement-content ol { margin: .5rem 0; padding-left: 1.5rem; list-style: revert; }
+.announcement-content a { color: var(--purple); text-decoration: underline; }
 .public-footer { padding: 1rem; text-align: center; color: var(--muted); font-size: .9rem; }
 .modal-backdrop { position: fixed; inset: 0; z-index: 4; display: grid; place-items: center; padding: 1rem; background: #20152db3; }
 .book-modal { position: relative; width: min(100%, 32rem); padding: 1.5rem; border: 2px solid #2d2d2d; border-radius: 1rem; background: #fff; box-shadow: 6px 6px 0 #ac7fff; }
@@ -391,6 +396,29 @@ th { background: #fff0b3; color: var(--purple-dark); font-size: .85rem; }
     .auth-logo { display: block; width: min(100%, 15rem); height: auto; margin: 0 auto 1.25rem; }
     .auth-mascot { position: fixed; right: max(3vw, 1rem); bottom: 1rem; width: clamp(6rem, 14vw, 11rem); opacity: .9; pointer-events: none; }
     .auth-back { display: block; margin-top: 1rem; text-align: center; font-weight: 800; }
+    .rich-text-editor { overflow: hidden; border: 1.5px solid #8d8494; border-radius: .75rem; background: #fff; }
+    .rich-text-toolbar { display: flex; flex-wrap: wrap; gap: .55rem; padding: .65rem; border-bottom: 1px solid #d9d2df; background: #f7f2ff; }
+    .rich-text-toolbar-group { display: flex; flex-wrap: wrap; gap: .3rem; padding-right: .55rem; border-right: 1px solid #d3c8e0; }
+    .rich-text-toolbar-group:last-child { padding-right: 0; border-right: 0; }
+    .rich-text-toolbar button { display: inline-flex; min-height: 2.4rem; align-items: center; justify-content: center; gap: .35rem; padding: .35rem .6rem; border: 1px solid transparent; border-radius: .5rem; background: #fff; color: #35234f; font-size: .82rem; font-weight: 800; }
+    .rich-text-toolbar button:hover { border-color: #ac7fff; background: #fff0f8; }
+    .rich-text-toolbar button[aria-pressed="true"] { border-color: #7044b5; background: #e9d9ff; box-shadow: inset 0 0 0 1px #7044b5; }
+    .rich-text-toolbar button:focus-visible { z-index: 1; outline: 3px solid #e9b940; outline-offset: 1px; }
+    .rich-text-toolbar button > span { font-size: .75rem; font-weight: 700; }
+    .rich-text-surface { min-height: 8rem; padding: .85rem 1rem; outline: none; line-height: 1.7; overflow-wrap: anywhere; }
+    .rich-text-surface--large { min-height: 20rem; }
+    .rich-text-surface:focus { box-shadow: inset 0 0 0 2px #ac7fff; }
+    .rich-text-surface:empty::before { color: #8b8491; content: "Escribe aquí…"; pointer-events: none; }
+    .rich-text-surface ul, .rich-text-surface ol { padding-left: 1.5rem; list-style: revert; }
+    .rich-text-surface a { color: #563884; text-decoration: underline; }
+    .rich-text-surface h2 { margin-block: .8rem .35rem; color: #563884; font-size: 1.25rem; }
+    .rich-text-surface blockquote { margin-block: .75rem; padding: .35rem .85rem; border-left: 4px solid #ac7fff; background: #f7f2ff; color: #514b58; }
+    @media (max-width: 640px) {
+        .rich-text-toolbar { gap: .4rem; padding: .45rem; }
+        .rich-text-toolbar-group { padding-right: .4rem; }
+        .rich-text-toolbar button { min-height: 2.2rem; padding: .3rem .45rem; }
+        .rich-text-toolbar button > span { font-size: .68rem; }
+    }
 }
 
 @media (min-width: 1180px) {

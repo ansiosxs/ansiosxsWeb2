@@ -8,7 +8,7 @@
 </head>
 <body class="public-page">
     <header class="public-header">
-        <div class="public-header-inner"><a class="public-brand" href="{{ route('catalogo') }}" aria-label="Biblioteca Comunitaria Insectaria, inicio"><img src="{{ asset('logo.png') }}" alt="Ansiosxs Nuevas Lecturas"></a>
+        <div class="public-header-inner"><a class="public-brand" href="{{ rtrim(config('cors.allowed_origins.0', 'https://www.ansiosxs.cl'), '/') }}/" aria-label="Volver al sitio de Ansiosxs"><img src="{{ asset('logo.png') }}" alt="Ansiosxs Nuevas Lecturas"></a>
             <a href="{{ auth()->check() ? route('admin.dashboard') : route('login') }}">Acceso voluntariado</a>
         </div>
     </header>
@@ -18,11 +18,6 @@
             <div><p class="eyebrow">Concepción, Chile</p><h1>Explora nuestro catálogo</h1><p>Busca libros y revisa su disponibilidad antes de visitarnos.</p></div>
             <img class="catalog-mascot catalog-mascot--right" src="{{ asset('mascotas/ave.png') }}" alt="" aria-hidden="true">
         </section>
-        @if ($anuncios->isNotEmpty())
-            <section class="announcements" aria-label="Anuncios">
-                @foreach ($anuncios as $anuncio)<article class="announcement"><h2>{{ $anuncio->titulo }}</h2><p>{{ $anuncio->cuerpo }}</p></article>@endforeach
-            </section>
-        @endif
         <section class="stats-grid catalog-stats" aria-label="Resumen del catálogo">
             <article class="stat-card"><span class="font-semibold text-[#716c77]">Ejemplares disponibles</span><strong>{{ number_format($unidadesDisponibles, 0, ',', '.') }}</strong><span class="text-sm text-[#716c77]">Unidades disponibles para préstamo</span></article>
             <article class="stat-card"><span class="font-semibold text-[#716c77]">Títulos en catálogo</span><strong>{{ number_format($titulosCatalogo, 0, ',', '.') }}</strong><span class="text-sm text-[#716c77]">Libros registrados, sin contar ejemplares</span></article>

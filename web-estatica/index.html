@@ -5,64 +5,73 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Inicio - Ansiosxs – Nuevas Lecturas</title>
   <meta name="description" content="Redescubre la infancia a través del arte y la narrativa. Experiencias creativas para niños, jóvenes y adultos.">
+  <meta name="api-base-url" content="https://biblioteca.ansiosxs.cl/api">
   <link rel="icon" type="image/png" href="images/logocircular.png">
   <link rel="apple-touch-icon" href="images/logocircular.png">
-  <link rel="preload" as="image" href="images/carousel/main.webp" type="image/webp" fetchpriority="high">
+  <link rel="preload" as="image" href="images/carousel/DSC02465.jpg" type="image/jpeg" fetchpriority="high">
   <link rel="stylesheet" href="css/styles.css">
 </head>
 <body data-page="home">
 
-  <nav class="nav nav--home">
-    <div class="container nav__inner">
-      <a class="nav__logo" href="index.html" aria-label="Ansiosxs – Nuevas Lecturas, inicio">
-        <img src="images/logo.png" alt="Ansiosxs Nuevas Lecturas">
-      </a>
+  <a class="skip-link" href="#main-content">Saltar al contenido principal</a>
+<nav class="nav nav--home" aria-label="Navegación principal">
+  <div class="container nav__inner">
+    <a class="nav__logo" href="index.html" aria-label="Ansiosxs – Nuevas Lecturas, inicio">
+      <img src="images/logo.png" alt="Ansiosxs Nuevas Lecturas">
+    </a>
 
-      <div class="nav__links">
-        <a href="index.html" class="is-active">Inicio</a>
-        <a href="quienes-somos.html">Quienes somos</a>
-        <div class="nav__item nav__item--dropdown">
-          <a href="proyectos.html">Proyectos <svg class="icon nav__caret" aria-hidden="true"><use href="#i-chevron-down"></use></svg></a>
-          <div class="dropdown">
-            <a href="proyectos.html#te-leo-te-dibujo">Te leo, te dibujo</a>
-            <a href="proyectos.html#insectaria">Biblioteca comunitaria Insectaria</a>
-            <a href="proyectos.html#bibliomovil">Bibliomóvil</a>
-            <a href="proyectos.html#talleres">Talleres Crea-Expresa</a>
-            <a href="proyectos.html#colaboraciones">Colaboraciones</a>
-          </div>
-        </div>
-        <a href="como-colaborar.html">Como colaborar</a>
-        <a href="contacto.html">Contacto</a>
-      </div>
-
-      <button class="nav__toggle" type="button" aria-label="Abrir menú" aria-expanded="false" aria-controls="menu-movil">
-        <svg class="icon icon-lg" aria-hidden="true"><use href="#i-menu"></use></svg>
-      </button>
-    </div>
-
-    <div class="mobile-menu" id="menu-movil">
-      <a href="index.html" class="is-active">Inicio</a>
+    <div class="nav__links">
+      <a href="index.html" class="is-active" aria-current="page">Inicio</a>
       <a href="quienes-somos.html">Quienes somos</a>
-      <a href="proyectos.html">Proyectos</a>
-      <div class="mobile-menu__sub">
-        <a href="proyectos.html#te-leo-te-dibujo">Te leo, te dibujo</a>
-        <a href="proyectos.html#insectaria">Biblioteca comunitaria Insectaria</a>
-        <a href="proyectos.html#bibliomovil">Bibliomóvil</a>
-        <a href="proyectos.html#talleres">Talleres Crea-Expresa</a>
-        <a href="proyectos.html#colaboraciones">Colaboraciones</a>
+      <div class="nav__item nav__item--dropdown">
+        <a href="proyectos.html">Proyectos <svg class="icon nav__caret" aria-hidden="true"><use href="#i-chevron-down"></use></svg></a>
+        <div class="dropdown">
+          <a href="proyectos.html#te-leo-te-dibujo">Te leo, te dibujo</a>
+          <a href="proyectos.html#insectaria">Biblioteca comunitaria Insectaria</a>
+          <a href="proyectos.html#bibliomovil">Bibliomóvil</a>
+          <a href="proyectos.html#talleres">Talleres Crea-Expresa</a>
+          <a href="proyectos.html#colaboraciones">Colaboraciones</a>
+        </div>
       </div>
+      <a href="noticias.html">Noticias</a>
       <a href="como-colaborar.html">Como colaborar</a>
       <a href="contacto.html">Contacto</a>
+      <a href="http://127.0.0.1:8001/">Catálogo</a>
     </div>
-  </nav>
 
-  <main>
+    <button class="nav__toggle" type="button" aria-label="Abrir menú" aria-expanded="false" aria-controls="menu-movil">
+      <svg class="icon icon-lg" aria-hidden="true"><use href="#i-menu"></use></svg>
+    </button>
+  </div>
+
+  <div class="mobile-menu" id="menu-movil">
+    <a href="index.html" class="is-active" aria-current="page">Inicio</a>
+    <a href="quienes-somos.html">Quienes somos</a>
+    <a href="proyectos.html">Proyectos</a>
+    <div class="mobile-menu__sub">
+      <a href="proyectos.html#te-leo-te-dibujo">Te leo, te dibujo</a>
+      <a href="proyectos.html#insectaria">Biblioteca comunitaria Insectaria</a>
+      <a href="proyectos.html#bibliomovil">Bibliomóvil</a>
+      <a href="proyectos.html#talleres">Talleres Crea-Expresa</a>
+      <a href="proyectos.html#colaboraciones">Colaboraciones</a>
+    </div>
+    <a href="noticias.html">Noticias</a>
+    <a href="como-colaborar.html">Como colaborar</a>
+    <a href="contacto.html">Contacto</a>
+    <a href="http://127.0.0.1:8001/">Catálogo</a>
+  </div>
+</nav>
+
+
+
+
+  <main id="main-content" tabindex="-1">
     <!-- Hero / carrusel -->
     <section class="hero">
       <div class="hero__slides">
         <div class="hero__slide is-active">
           <div class="hero__placeholder"></div>
-          <img src="images/carousel/main.webp" alt="Imagen principal del carrusel - Biblioteca comunitaria" fetchpriority="high" decoding="sync">
+          <img src="images/carousel/DSC02465.jpg" alt="Estanterías de libros ilustrados en la biblioteca comunitaria" fetchpriority="high" decoding="sync">
           <div class="hero__overlay"></div>
           <div class="hero__content">
             <h1 class="hero__title">Bienvenides a Ansiosxs</h1>
@@ -73,7 +82,7 @@
 
         <div class="hero__slide" aria-hidden="true">
           <div class="hero__placeholder"></div>
-          <img src="images/carousel/main.webp" alt="Imagen principal del carrusel - Biblioteca comunitaria" loading="lazy" decoding="async">
+          <img src="images/carousel/DSC02470.jpg" alt="Estanterías de libros ilustrados en la biblioteca comunitaria" loading="lazy" decoding="async">
           <div class="hero__overlay"></div>
           <div class="hero__content">
             <h1 class="hero__title">Conoce Nuestro Laboratorio Creativo!</h1>
@@ -84,12 +93,22 @@
 
         <div class="hero__slide" aria-hidden="true">
           <div class="hero__placeholder"></div>
-          <img src="images/carousel/main.webp" alt="Imagen principal del carrusel - Biblioteca comunitaria" loading="lazy" decoding="async">
+          <img src="images/carousel/DSC02473.jpg" alt="Colección de libros y novelas gráficas de la biblioteca" loading="lazy" decoding="async">
           <div class="hero__overlay"></div>
           <div class="hero__content">
             <h1 class="hero__title">Forma parte</h1>
             <p class="hero__text">Tu apoyo es fundamental para seguir tejiendo redes creativas. Descubre cómo puedes colaborar y ayudarnos a llevar más arte y lectura a más comunidades.</p>
             <p class="hero__cta"><a class="btn btn-lg btn-blue sticker-button" href="como-colaborar.html">Cómo Colaborar <svg class="icon" aria-hidden="true"><use href="#i-arrow-right"></use></svg></a></p>
+          </div>
+        </div>
+        <div class="hero__slide" aria-hidden="true">
+          <div class="hero__placeholder"></div>
+          <img src="images/carousel/DSC02477.jpg" alt="Libros y figuras de papel hechos para decorar la biblioteca" loading="lazy" decoding="async">
+          <div class="hero__overlay"></div>
+          <div class="hero__content">
+            <h1 class="hero__title">Historias que nos reúnen</h1>
+            <p class="hero__text">Un espacio comunitario para descubrir libros, compartir lecturas y encontrarnos alrededor de nuevas historias.</p>
+            <p class="hero__cta"><a class="btn btn-lg btn-yellow sticker-button" href="proyectos.html#insectaria">Conoce Insectaria <svg class="icon" aria-hidden="true"><use href="#i-arrow-right"></use></svg></a></p>
           </div>
         </div>
       </div>
@@ -105,6 +124,7 @@
         <button class="hero__dot is-active" type="button" aria-label="Slide 1"></button>
         <button class="hero__dot" type="button" aria-label="Slide 2"></button>
         <button class="hero__dot" type="button" aria-label="Slide 3"></button>
+        <button class="hero__dot" type="button" aria-label="Slide 4"></button>
       </div>
     </section>
 
@@ -149,6 +169,7 @@
 
     <!-- Nuestros proyectos -->
     <section class="section bg-pink-soft">
+      <img class="mascot mascot--ave-sm" src="images/mascotas/ave.png" alt="" aria-hidden="true">
       <div class="container">
         <div class="reveal text-center mb-16">
           <h2 class="font-cookie" style="font-size: clamp(1.875rem, 4vw, 2.25rem); font-weight: 700; margin-bottom: 1rem;">Nuestros Proyectos</h2>
@@ -196,8 +217,53 @@
       </div>
     </section>
 
+    <!-- Catálogo de la biblioteca -->
+    <section class="section bg-blue-soft" aria-labelledby="catalog-title">
+      <div class="container container-text text-center">
+        <div class="reveal">
+          <h2 id="catalog-title" class="font-cookie text-purple mb-4" style="font-size: clamp(1.875rem, 4vw, 2.25rem); font-weight: 700;">Descubre nuestro catálogo</h2>
+          <p class="text-soft mb-8" style="font-size: 1.125rem;">Explora los libros y narrativas ilustradas disponibles en nuestra biblioteca comunitaria Insectaria.</p>
+          <a class="btn btn-lg btn-yellow sticker-button" href="http://127.0.0.1:8001/">Revisar el catálogo <svg class="icon" aria-hidden="true"><use href="#i-arrow-right"></use></svg></a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Últimas noticias -->
+    <section class="section bg-white" aria-labelledby="home-news-title">
+      <img class="mascot mascot--serpi-right" src="images/mascotas/serpi.png" alt="" aria-hidden="true">
+      <div class="container">
+        <div class="reveal text-center mb-12">
+          <h2 id="home-news-title" class="font-cookie text-purple" style="font-size: clamp(1.875rem, 4vw, 2.25rem); font-weight: 700; margin-bottom: 1rem;">Últimas noticias</h2>
+          <p class="text-soft" style="font-size: 1.125rem;">Entérate de las novedades, actividades e historias de nuestra comunidad.</p>
+        </div>
+        <div id="home-news-feedback" class="news-feedback" role="status" aria-live="polite">Cargando noticias…</div>
+        <div id="home-news-grid" class="news-grid news-grid--home mt-8" aria-label="Últimas tres noticias"></div>
+        <div class="text-center mt-8">
+          <a class="btn btn-lg btn-yellow sticker-button" href="noticias.html">Ver todas las noticias <svg class="icon" aria-hidden="true"><use href="#i-arrow-right"></use></svg></a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Instagram -->
+    <section class="section bg-purple-soft" aria-labelledby="instagram-title">
+      <img class="mascot mascot--lobo-sm" src="images/mascotas/lobo.png" alt="" aria-hidden="true">
+      <div class="container">
+        <div class="reveal text-center mb-16">
+          <h2 id="instagram-title" class="font-cookie text-purple" style="font-size: clamp(1.875rem, 4vw, 2.25rem); font-weight: 700; margin-bottom: 1rem;">Síguenos en Instagram</h2>
+          <p class="text-soft" style="font-size: 1.125rem; max-width: 46rem; margin-inline: auto;">Descubre nuestras publicaciones, actividades e historias de la comunidad.</p>
+        </div>
+
+        <div class="reveal instagram-profile">
+          <iframe class="instagram-embed" src="https://www.instagram.com/ansiosxs/embed/" title="Perfil de Ansiosxs en Instagram" loading="lazy" allowtransparency="true" allowfullscreen></iframe>
+          <a class="instagram-embed__fallback" href="https://www.instagram.com/ansiosxs" target="_blank" rel="noopener noreferrer">Ver el perfil completo en Instagram</a>
+        </div>
+
+      </div>
+    </section>
+
     <!-- CTA -->
     <section class="section bg-yellow-soft">
+      <img class="mascot mascot--serpi-right" src="images/mascotas/serpi.png" alt="" aria-hidden="true">
       <div class="container container-text text-center">
         <div class="reveal">
           <h2 class="font-cookie mb-6" style="font-size: clamp(1.875rem, 4vw, 2.25rem); font-weight: 700;">Únete a Nuestra Comunidad Creativa</h2>
@@ -212,59 +278,62 @@
   </main>
 
   <footer class="footer">
-    <div class="container" style="padding-block: 3rem;">
-      <div class="footer__grid">
-        <div>
-          <a href="index.html" class="flex items-center mb-4" aria-label="Ansiosxs – Nuevas Lecturas, inicio">
-            <img src="images/logo.png" alt="Ansiosxs Nuevas Lecturas" style="height: 2.5rem; width: auto;">
-          </a>
-          <p class="text-soft mb-4" style="max-width: 28rem;">Un laboratorio creativo que explora la lectura más allá del papel. Llevamos las narrativas al territorio, al cuerpo y a lo colectivo, creando un cambio a través del arte.</p>
-          <div class="social">
-            <a href="https://www.instagram.com/ansiosxs" target="_blank" rel="noopener noreferrer" aria-label="Instagram" class="social-instagram"><svg class="icon" aria-hidden="true"><use href="#i-instagram"></use></svg></a>
-            <a href="https://www.facebook.com/Ansiosxs/" target="_blank" rel="noopener noreferrer" aria-label="Facebook" class="social-facebook"><svg class="icon" aria-hidden="true"><use href="#i-facebook"></use></svg></a>
-            <a href="https://www.youtube.com/channel/UCMWvXVIqLlI72pXkdeWM62g" target="_blank" rel="noopener noreferrer" aria-label="YouTube" class="social-youtube"><svg class="icon" aria-hidden="true"><use href="#i-youtube"></use></svg></a>
-            <a href="https://www.linkedin.com/company/ong-ansiosxs-nuevas-lecturas/?viewAsMember=true" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn" class="social-linkedin"><svg class="icon" aria-hidden="true"><use href="#i-linkedin"></use></svg></a>
-            <a href="mailto:ansiosxs@gmail.com" aria-label="Enviar correo" class="social-mail"><svg class="icon" aria-hidden="true"><use href="#i-mail"></use></svg></a>
-          </div>
-        </div>
-
-        <div>
-          <span class="footer__title">Enlaces Rápidos</span>
-          <ul class="footer__list">
-            <li><a href="quienes-somos.html">Quienes Somos</a></li>
-            <li><a href="proyectos.html">Proyectos</a></li>
-            <li><a href="como-colaborar.html">Como Colaborar</a></li>
-            <li><a href="contacto.html">Contacto</a></li>
-          </ul>
-        </div>
-
-        <div>
-          <span class="footer__title">Contacto</span>
-          <ul class="footer__list footer__contact">
-            <li>
-              <svg class="icon icon-sm" aria-hidden="true"><use href="#i-mail"></use></svg>
-              <a href="mailto:ansiosxs@gmail.com">ansiosxs@gmail.com</a>
-            </li>
-            <li>
-              <svg class="icon icon-sm" aria-hidden="true"><use href="#i-phone"></use></svg>
-              <span>+56 9 44326527</span>
-            </li>
-            <li>
-              <svg class="icon icon-sm" aria-hidden="true"><use href="#i-map-pin"></use></svg>
-              <span>Juan Martínez de Rozas 1445, Concepción, Bío Bío</span>
-            </li>
-          </ul>
+  <div class="container" style="padding-block: 3rem;">
+    <div class="footer__grid">
+      <div>
+        <a href="index.html" class="flex items-center mb-4" aria-label="Ansiosxs – Nuevas Lecturas, inicio">
+          <img src="images/logo.png" alt="Ansiosxs Nuevas Lecturas" style="height: 2.5rem; width: auto;">
+        </a>
+        <p class="text-soft mb-4" style="max-width: 28rem;">Un laboratorio creativo que explora la lectura más allá del papel. Llevamos las narrativas al territorio, al cuerpo y a lo colectivo, creando un cambio a través del arte.</p>
+        <div class="social">
+          <a href="https://www.instagram.com/ansiosxs" target="_blank" rel="noopener noreferrer" aria-label="Instagram" class="social-instagram"><svg class="icon" aria-hidden="true"><use href="#i-instagram"></use></svg></a>
+          <a href="https://www.facebook.com/Ansiosxs/" target="_blank" rel="noopener noreferrer" aria-label="Facebook" class="social-facebook"><svg class="icon" aria-hidden="true"><use href="#i-facebook"></use></svg></a>
+          <a href="https://www.youtube.com/channel/UCMWvXVIqLlI72pXkdeWM62g" target="_blank" rel="noopener noreferrer" aria-label="YouTube" class="social-youtube"><svg class="icon" aria-hidden="true"><use href="#i-youtube"></use></svg></a>
+          <a href="https://www.linkedin.com/company/ong-ansiosxs-nuevas-lecturas/?viewAsMember=true" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn" class="social-linkedin"><svg class="icon" aria-hidden="true"><use href="#i-linkedin"></use></svg></a>
+          <a href="mailto:ansiosxs@gmail.com" aria-label="Enviar correo" class="social-mail"><svg class="icon" aria-hidden="true"><use href="#i-mail"></use></svg></a>
         </div>
       </div>
 
-      <div class="footer__bottom">
-        <p>© <span data-year>2025</span> Ansiosxs – Nuevas Lecturas. Todos los derechos reservados.</p>
+      <div>
+        <span class="footer__title">Enlaces Rápidos</span>
+        <ul class="footer__list">
+          <li><a href="quienes-somos.html">Quienes Somos</a></li>
+          <li><a href="proyectos.html">Proyectos</a></li>
+          <li><a href="noticias.html">Noticias</a></li>
+          <li><a href="como-colaborar.html">Como Colaborar</a></li>
+          <li><a href="contacto.html">Contacto</a></li>
+          <li><a href="enlaces.html">Todos nuestros enlaces</a></li>
+        </ul>
+      </div>
+
+      <div>
+        <span class="footer__title">Contacto</span>
+        <ul class="footer__list footer__contact">
+          <li>
+            <svg class="icon icon-sm" aria-hidden="true"><use href="#i-mail"></use></svg>
+            <a href="mailto:ansiosxs@gmail.com">ansiosxs@gmail.com</a>
+          </li>
+          <li>
+            <svg class="icon icon-sm" aria-hidden="true"><use href="#i-phone"></use></svg>
+            <span>+56 9 44326527</span>
+          </li>
+          <li>
+            <svg class="icon icon-sm" aria-hidden="true"><use href="#i-map-pin"></use></svg>
+            <span>Juan Martínez de Rozas 1445, Concepción, Bío Bío</span>
+          </li>
+        </ul>
       </div>
     </div>
-  </footer>
+
+    <div class="footer__bottom">
+      <p>© <span data-year>2025</span> Ansiosxs – Nuevas Lecturas. Todos los derechos reservados.</p>
+    </div>
+  </div>
+</footer>
 
   <script src="js/icons.js" defer></script>
   <script src="js/main.js" defer></script>
   <script src="js/carousel.js" defer></script>
+  <script src="js/home-news.js" defer></script>
 </body>
 </html>

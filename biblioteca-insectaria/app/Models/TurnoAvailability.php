@@ -7,13 +7,17 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class TurnoAvailability extends Model
 {
-    protected $fillable = ['turno_schedule_id', 'user_id', 'weekdays', 'date_overrides'];
+    protected $fillable = [
+        'turno_schedule_id', 'user_id', 'weekdays', 'date_overrides', 'participates', 'monthly_turns',
+    ];
 
     protected function casts(): array
     {
         return [
             'weekdays' => 'array',
             'date_overrides' => 'array',
+            'participates' => 'boolean',
+            'monthly_turns' => 'integer',
         ];
     }
 

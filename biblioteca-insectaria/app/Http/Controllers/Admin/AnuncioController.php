@@ -4,12 +4,16 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Anuncio;
+use App\Support\RichTextSanitizer;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class AnuncioController extends Controller
 {
+    public function __construct(private readonly RichTextSanitizer $htmlSanitizer) {}
+
     public function index(): View
     {
         return view('admin.anuncios.index', ['anuncios' => Anuncio::query()->latest('publicar_desde')->paginate(25)]);
@@ -48,7 +52,7 @@ class AnuncioController extends Controller
 
     private function validar(Request $request): array
     {
-        return $request->validate([
+        $validated = $request->validate([
             'titulo' => ['required', 'string', 'max:255'],
             'cuerpo' => ['required', 'string', 'max:10000'],
             'publicar_desde' => ['required', 'date'],
@@ -56,5 +60,15 @@ class AnuncioController extends Controller
         ], [
             'publicar_hasta.after_or_equal' => 'La fecha de término debe ser igual o posterior al inicio.',
         ]);
+
+        $validated['cuerpo'] = $this->htmlSanitizer->sanitize($validated['cuerpo']) ?? '';
+
+        if (trim(strip_tags($validated['cuerpo'])) === '') {
+            throw ValidationException::withMessages([
+                'cuerpo' => 'El texto del anuncio debe incluir contenido.',
+            ]);
+        }
+
+        return $validated;
     }
 }

@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Anuncio;
 use App\Models\Libro;
 use App\Models\Mueble;
 use App\Models\Prestamo;
@@ -32,11 +31,6 @@ class CatalogoController extends Controller
             ->first();
 
         return view('catalogo.index', [
-            'anuncios' => Anuncio::query()
-                ->whereDate('publicar_desde', '<=', today())
-                ->where(fn ($query) => $query->whereNull('publicar_hasta')->orWhereDate('publicar_hasta', '>=', today()))
-                ->latest('publicar_desde')
-                ->get(),
             'unidadesDisponibles' => (int) $inventario->unidades_disponibles,
             'titulosCatalogo' => (int) $inventario->titulos_catalogo,
             'muebles' => Mueble::query()->orderBy('nombre')->get(['id', 'nombre']),

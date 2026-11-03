@@ -6,8 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
@@ -31,11 +31,18 @@ class UserController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        $datos = $this->validar($request);
-        $datos['password'] = Hash::make($datos['password']);
-        $datos['activo'] = $datos['activo'] ?? true;
+        $datos = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'password' => ['required', 'string', 'min:8'],
+        ]);
 
-        User::query()->create($datos);
+        User::query()->create([
+            'name' => $datos['name'],
+            'password' => Hash::make($datos['password']),
+            'role' => User::ROLE_VOLUNTARIO,
+            'activo' => true,
+            'must_change_password' => true,
+        ]);
 
         return redirect()->route('admin.usuarios.index')->with('status', 'Usuario creado correctamente.');
     }
@@ -88,19 +95,27 @@ class UserController extends Controller
             ->orWhere('devuelto_por_user_id', $usuario->id)
             ->exists()
             || DB::table('anuncios')->where('user_id', $usuario->id)->exists()
+            || DB::table('noticias')->where('user_id', $usuario->id)->exists()
             || DB::table('socios')->where('user_id', $usuario->id)->exists()
-            || DB::table('user_action_logs')
-                ->where('user_id', $usuario->id)
-                ->orWhere('actor_id', $usuario->id)
-                ->exists();
+            || DB::table('turno_availabilities')->where('user_id', $usuario->id)->exists()
+            || DB::table('turno_asignaciones')->where('user_id', $usuario->id)->exists()
+            || DB::table('turno_actividades')->where('created_by', $usuario->id)->exists()
+            || DB::table('volunteer_reports')->where('reported_by', $usuario->id)->exists();
 
         if ($tieneHistorial) {
             return back()->withErrors([
-                'usuario' => 'No se puede eliminar porque tiene registros asociados. Usa «Dar de baja» para revocar su acceso y conservar el historial.',
+                'usuario' => 'No se puede eliminar porque tiene registros o historial de turnos asociados. Usa «Dar de baja» para revocar su acceso y conservar el historial.',
             ]);
         }
 
-        $usuario->delete();
+        DB::transaction(function () use ($usuario): void {
+            DB::table('user_action_logs')
+                ->where('user_id', $usuario->id)
+                ->orWhere('actor_id', $usuario->id)
+                ->delete();
+
+            $usuario->delete();
+        });
 
         return redirect()->route('admin.usuarios.index')->with('status', 'Usuario eliminado correctamente.');
     }
@@ -109,8 +124,8 @@ class UserController extends Controller
     {
         $reglas = [
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($usuario?->id)],
-            'role' => ['required', Rule::in([User::ROLE_ADMIN, User::ROLE_VOLUNTARIO])],
+            'email' => ['required', Rule::email()->strict(), 'max:254', Rule::unique('users', 'email')->ignore($usuario?->id)],
+            'role' => ['required', Rule::in([User::ROLE_ADMIN, User::ROLE_EDITOR, User::ROLE_VOLUNTARIO])],
             'activo' => ['nullable', 'boolean'],
         ];
 
@@ -119,6 +134,7 @@ class UserController extends Controller
         }
 
         return $request->validate($reglas, [
+            'email.email' => 'Ingresa un correo electrónico con formato válido.',
             'email.unique' => 'Este correo ya está registrado en otra cuenta.',
             'role.in' => 'El rol seleccionado no es válido.',
         ]);

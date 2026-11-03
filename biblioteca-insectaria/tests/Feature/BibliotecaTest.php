@@ -12,7 +12,7 @@ use App\Models\User;
 use App\Models\UserActionLog;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -62,6 +62,80 @@ class BibliotecaTest extends TestCase
         $this->assertAuthenticatedAs($user);
     }
 
+    public function test_admin_creates_volunteer_with_name_and_provisional_password_only(): void
+    {
+        $admin = User::factory()->create(['role' => User::ROLE_ADMIN]);
+
+        $this->actingAs($admin)
+            ->get(route('admin.usuarios.create'))
+            ->assertOk()
+            ->assertSee('Contraseña provisional')
+            ->assertDontSee('name="email"', false)
+            ->assertDontSee('name="role"', false);
+
+        $this->post(route('admin.usuarios.store'), [
+            'name' => 'Camila Nueva',
+            'password' => 'Provisional123!',
+        ])->assertRedirect(route('admin.usuarios.index'));
+
+        $user = User::query()->where('name', 'Camila Nueva')->firstOrFail();
+        $this->assertNull($user->email);
+        $this->assertSame(User::ROLE_VOLUNTARIO, $user->role);
+        $this->assertTrue($user->activo);
+        $this->assertTrue($user->must_change_password);
+        $this->assertTrue(Hash::check('Provisional123!', $user->password));
+    }
+
+    public function test_provisional_login_requires_email_and_a_different_permanent_password(): void
+    {
+        $user = User::factory()->create([
+            'name' => 'Camila Nueva',
+            'email' => null,
+            'password' => 'Provisional123!',
+            'must_change_password' => true,
+        ]);
+
+        $this->post(route('login.store'), ['login' => $user->name, 'password' => 'Provisional123!'])
+            ->assertRedirect(route('account.setup'));
+        $this->assertAuthenticatedAs($user);
+        $this->get(route('admin.dashboard'))->assertRedirect(route('account.setup'));
+        $this->get(route('account.setup'))->assertOk()
+            ->assertSee('Completa tu cuenta')
+            ->assertSee('name="email"', false);
+
+        $this->from(route('account.setup'))->post(route('account.setup.store'), [
+            'email' => 'camila@localhost',
+            'password' => 'Definitiva123!',
+            'password_confirmation' => 'Definitiva123!',
+        ])->assertSessionHasErrors('email');
+        $this->assertNull($user->fresh()->email);
+
+        $this->from(route('account.setup'))->post(route('account.setup.store'), [
+            'email' => 'camila@example.cl',
+            'password' => 'Provisional123!',
+            'password_confirmation' => 'Provisional123!',
+        ])->assertSessionHasErrors('password');
+        $this->assertNull($user->fresh()->email);
+        $this->assertTrue($user->fresh()->must_change_password);
+
+        $this->post(route('account.setup.store'), [
+            'email' => 'camila@example.cl',
+            'password' => 'Definitiva123!',
+            'password_confirmation' => 'Definitiva123!',
+        ])->assertRedirect(route('admin.dashboard'));
+
+        $user->refresh();
+        $this->assertSame('camila@example.cl', $user->email);
+        $this->assertFalse($user->must_change_password);
+        $this->get(route('admin.dashboard'))->assertOk();
+
+        $this->post(route('logout'));
+        $this->post(route('login.store'), ['login' => $user->email, 'password' => 'Provisional123!'])
+            ->assertSessionHasErrors('login');
+        $this->post(route('login.store'), ['login' => $user->email, 'password' => 'Definitiva123!'])
+            ->assertRedirect(route('admin.dashboard'));
+    }
+
     public function test_authenticated_volunteer_access_link_opens_dashboard_and_expired_session_returns_to_login(): void
     {
         $voluntario = User::factory()->create();
@@ -91,13 +165,29 @@ class BibliotecaTest extends TestCase
     {
         $this->artisan('biblioteca:crear-voluntario', ['--sql' => true])
             ->expectsQuestion('Nombre', "Ada O'Neil")
-            ->expectsQuestion('Correo electrónico', 'ada@example.cl')
-            ->expectsQuestion('Contraseña (mínimo 12 caracteres)', 'ClaveSegura123!')
-            ->expectsOutputToContain("VALUES ('Ada O''Neil', 'ada@example.cl',")
+            ->expectsQuestion('Contraseña provisional (mínimo 12 caracteres)', 'ClaveSegura123!')
+            ->expectsOutputToContain('`must_change_password`)')
+            ->expectsOutputToContain("'Ada O''Neil',")
+            ->expectsOutputToContain('    NULL,')
+            ->expectsOutputToContain('    1')
             ->expectsOutputToContain('No se creó una cuenta en esta base local.')
             ->assertExitCode(0);
 
-        $this->assertDatabaseMissing('users', ['email' => 'ada@example.cl']);
+        $this->assertDatabaseCount('users', 0);
+    }
+
+    public function test_volunteer_command_creates_a_pending_account_with_only_name_and_provisional_password(): void
+    {
+        $this->artisan('biblioteca:crear-voluntario')
+            ->expectsQuestion('Nombre', 'Ada Lovelace')
+            ->expectsQuestion('Contraseña provisional (mínimo 12 caracteres)', 'ClaveSegura123!')
+            ->expectsOutputToContain('Cuenta voluntaria creada.')
+            ->assertExitCode(0);
+
+        $user = User::query()->where('name', 'Ada Lovelace')->firstOrFail();
+        $this->assertNull($user->email);
+        $this->assertTrue($user->must_change_password);
+        $this->assertTrue(Hash::check('ClaveSegura123!', $user->password));
     }
 
     public function test_admin_cannot_delete_user_with_history_and_is_told_to_deactivate_instead(): void
@@ -116,6 +206,36 @@ class BibliotecaTest extends TestCase
 
         $this->assertDatabaseHas('users', ['id' => $voluntario->id, 'activo' => true]);
         $this->assertDatabaseHas('prestamos', ['user_id' => $voluntario->id]);
+    }
+
+    public function test_admin_can_delete_user_and_its_action_logs(): void
+    {
+        $admin = User::factory()->create(['role' => User::ROLE_ADMIN]);
+        $voluntario = User::factory()->create();
+
+        UserActionLog::create([
+            'user_id' => $voluntario->id,
+            'actor_id' => $admin->id,
+            'action' => 'POST admin.socios.store',
+        ]);
+        UserActionLog::create([
+            'user_id' => $admin->id,
+            'actor_id' => $voluntario->id,
+            'action' => 'POST admin.libros.store',
+        ]);
+
+        $this->actingAs($admin)
+            ->delete(route('admin.usuarios.destroy', $voluntario))
+            ->assertRedirect(route('admin.usuarios.index'))
+            ->assertSessionHas('status', 'Usuario eliminado correctamente.');
+
+        $this->assertDatabaseMissing('users', ['id' => $voluntario->id]);
+        $this->assertDatabaseMissing('user_action_logs', [
+            'user_id' => $voluntario->id,
+        ]);
+        $this->assertDatabaseMissing('user_action_logs', [
+            'actor_id' => $voluntario->id,
+        ]);
     }
 
     public function test_volunteer_cannot_delete_books_and_admin_cannot_delete_while_loan_is_active(): void
@@ -1114,6 +1234,7 @@ class BibliotecaTest extends TestCase
         $this->get(route('admin.dashboard'))
             ->assertOk()
             ->assertSee('Unidades prestadas por mes')
+            ->assertDontSee('Estadísticas')
             ->assertSee('Vistas')
             ->assertSee('2026-10');
         $this->get(route('admin.prestamos.index'))

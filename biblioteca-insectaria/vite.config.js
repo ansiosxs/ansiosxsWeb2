@@ -7,7 +7,7 @@ export default defineConfig({
     plugins: [
         vue(),
         laravel({
-            input: ['resources/css/app.css', 'resources/js/app.js', 'resources/js/admin.js', 'resources/js/admin-resiliencia.js', 'resources/js/admin-interacciones.js'],
+            input: ['resources/css/app.css', 'resources/js/app.js', 'resources/js/admin.js', 'resources/js/admin-resiliencia.js', 'resources/js/admin-interacciones.js', 'resources/js/rich-text-editor.js'],
             refresh: true,
         }),
         tailwindcss(),

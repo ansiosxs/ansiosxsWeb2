@@ -65,19 +65,23 @@
                             <span aria-hidden="true">▦</span><span>Turnos y actividades</span>
                         </a>
                         <a href="{{ route('admin.reportes.index') }}" @class(['admin-nav-link', 'is-active' => request()->routeIs('admin.reportes.*')]) @click="sidebarOpen = false">
-                            <span aria-hidden="true">✉</span><span>Informes</span>
+                            <span aria-hidden="true">✉</span><span>Reportes</span>
                         </a>
                         <a href="{{ route('admin.anuncios.index') }}" @class(['admin-nav-link', 'is-active' => request()->routeIs('admin.anuncios.*')]) @click="sidebarOpen = false">
                             <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 10.25v3.5h3l9 4v-11l-9 3.5H4Zm3 3.5 1.5 5h3l-1.5-4.333M16 9.5a3 3 0 0 1 0 5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
                             <span>Anuncios</span>
                         </a>
+                        @if (auth()->user()->isAdmin() || auth()->user()->isEditor())
+                            <a href="{{ route('admin.noticias.index') }}" @class(['admin-nav-link', 'is-active' => request()->routeIs('admin.noticias.*')]) @click="sidebarOpen = false">
+                                <span aria-hidden="true">✎</span><span>Noticias</span>
+                            </a>
+                            <a href="{{ route('admin.enlaces.index') }}" @class(['admin-nav-link', 'is-active' => request()->routeIs('admin.enlaces.*')]) @click="sidebarOpen = false">
+                                <span aria-hidden="true">↗</span><span>Enlaces públicos</span>
+                            </a>
+                        @endif
                         <a href="{{ route('admin.estanterias.index') }}" @class(['admin-nav-link', 'is-active' => request()->routeIs('admin.estanterias.*', 'admin.muebles.*')]) @click="sidebarOpen = false">
                             <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 10.5V6.75A2.25 2.25 0 0 1 6.25 4.5h11.5A2.25 2.25 0 0 1 20 6.75v3.75m-16 0h16v7H4v-7Zm2 7v2m12-2v2M7 10.5V8h10v2.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
                             <span>Estanterías</span>
-                        </a>
-                        <a href="{{ route('admin.estadisticas') }}" @class(['admin-nav-link', 'is-active' => request()->routeIs('admin.estadisticas')]) @click="sidebarOpen = false">
-                            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 19.5V12m5 7.5V5m5 14.5v-10m5 10V8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
-                            <span>Estadísticas</span>
                         </a>
                         @if (auth()->user()->isAdmin())
                             <a href="{{ route('admin.usuarios.index') }}" @class(['admin-nav-link', 'is-active' => request()->routeIs('admin.usuarios.*')]) @click="sidebarOpen = false">
@@ -114,7 +118,7 @@
                 <div class="flex shrink-0 items-center gap-3">
                     <span class="hidden text-right sm:block">
                         <span class="block text-sm font-bold text-[#35234f]">{{ auth()->user()->name }}</span>
-                        <span class="block text-xs text-[#716c77]">{{ auth()->user()->isAdmin() ? 'Administrador' : 'Voluntario' }}</span>
+                        <span class="block text-xs text-[#716c77]">{{ auth()->user()->isAdmin() ? 'Administrador' : (auth()->user()->isEditor() ? 'Editor' : 'Voluntario') }}</span>
                     </span>
                     <form method="post" action="{{ route('logout') }}">@csrf
                         <button class="button button-secondary admin-logout" type="submit">Cerrar sesión</button>
@@ -133,5 +137,6 @@
             </main>
         </div>
     </div>
+    @stack('scripts')
 </body>
 </html>

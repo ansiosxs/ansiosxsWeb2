@@ -2,10 +2,12 @@
 
 use App\Http\Controllers\Admin\AnuncioController;
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\EnlacePublicoController;
 use App\Http\Controllers\Admin\ExportController;
 use App\Http\Controllers\Admin\LibroController;
 use App\Http\Controllers\Admin\LogController;
 use App\Http\Controllers\Admin\MuebleController;
+use App\Http\Controllers\Admin\NoticiaController;
 use App\Http\Controllers\Admin\PrestamoController;
 use App\Http\Controllers\Admin\SocioController;
 use App\Http\Controllers\Admin\TurnoController;
@@ -13,9 +15,13 @@ use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\VolunteerReportController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CatalogoController;
+use App\Http\Controllers\NoticiaPublicaController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [CatalogoController::class, 'index'])->name('catalogo');
+Route::get('/noticias/{noticia}', [NoticiaPublicaController::class, 'pagina'])
+    ->whereNumber('noticia')
+    ->name('noticias.publicas.show');
 Route::get('/api/catalogo', [CatalogoController::class, 'buscar'])->name('api.catalogo.index');
 Route::get('/api/catalogo/{libro}', [CatalogoController::class, 'mostrar'])->whereNumber('libro')->name('api.catalogo.show');
 
@@ -24,6 +30,10 @@ Route::get('/forgot-password', [AuthController::class, 'forgotPassword'])->middl
 Route::post('/forgot-password', [AuthController::class, 'sendResetLink'])->middleware('guest')->name('password.email');
 Route::get('/reset-password/{token}', [AuthController::class, 'showResetForm'])->middleware('guest')->name('password.reset');
 Route::post('/reset-password', [AuthController::class, 'resetPassword'])->middleware('guest')->name('password.update');
+Route::middleware('auth')->group(function () {
+    Route::get('/completar-cuenta', [AuthController::class, 'showAccountSetup'])->name('account.setup');
+    Route::post('/completar-cuenta', [AuthController::class, 'completeAccountSetup'])->name('account.setup.store');
+});
 
 Route::middleware('guest')->group(function () {
     Route::post('/login', [AuthController::class, 'store'])->middleware('log.user.action')->name('login.store');
@@ -31,7 +41,7 @@ Route::middleware('guest')->group(function () {
 
 Route::post('/logout', [AuthController::class, 'destroy'])->middleware(['auth', 'log.user.action'])->name('logout');
 
-Route::prefix('admin')->name('admin.')->middleware(['auth', 'log.user.action'])->group(function () {
+Route::prefix('admin')->name('admin.')->middleware(['auth', 'account.configured', 'log.user.action'])->group(function () {
     Route::get('/', DashboardController::class)->name('dashboard');
 
     Route::resource('libros', LibroController::class)->except(['destroy']);
@@ -58,13 +68,12 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'log.user.action'])-
     Route::get('estadisticas/libros-mas-prestados', [DashboardController::class, 'librosMasPrestados'])->name('estadisticas.libros-mas-prestados');
     Route::get('turnos', [TurnoController::class, 'index'])->name('turnos.index');
     Route::get('turnos/{turno}', [TurnoController::class, 'show'])->whereNumber('turno')->name('turnos.show');
-    Route::post('turnos/{turno}/disponibilidad', [TurnoController::class, 'disponibilidad'])->whereNumber('turno')->name('turnos.disponibilidad');
     Route::get('turnos/{turno}/calendario.svg', [TurnoController::class, 'calendarioSvg'])->whereNumber('turno')->name('turnos.calendario');
     Route::get('reportes', [VolunteerReportController::class, 'index'])->name('reportes.index');
     Route::post('reportes', [VolunteerReportController::class, 'store'])->name('reportes.store');
 });
 
-Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin', 'log.user.action'])->group(function () {
+Route::prefix('admin')->name('admin.')->middleware(['auth', 'account.configured', 'role:admin', 'log.user.action'])->group(function () {
     Route::post('prestamos/{prestamo}/correo-morosidad', [PrestamoController::class, 'correoMorosidad'])->name('prestamos.correo-morosidad');
     Route::post('prestamos/{prestamo}/marcar-devuelto', [PrestamoController::class, 'marcarComoDevuelto'])->name('prestamos.marcar-devuelto');
     Route::resource('usuarios', UserController::class)->except(['show']);
@@ -73,6 +82,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin', 'log.u
     Route::get('turnos/crear', [TurnoController::class, 'create'])->name('turnos.create');
     Route::post('turnos', [TurnoController::class, 'store'])->name('turnos.store');
     Route::put('turnos/{turno}/dias/{dia}', [TurnoController::class, 'actualizarDia'])->whereNumber(['turno', 'dia'])->name('turnos.dias.update');
+    Route::put('turnos/{turno}/voluntarios', [TurnoController::class, 'actualizarVoluntarios'])->whereNumber('turno')->name('turnos.voluntarios.update');
     Route::post('turnos/{turno}/generar', [TurnoController::class, 'generar'])->whereNumber('turno')->name('turnos.generar');
     Route::post('turnos/{turno}/publicar', [TurnoController::class, 'publicar'])->whereNumber('turno')->name('turnos.publicar');
     Route::post('turnos/{turno}/actividades', [TurnoController::class, 'guardarActividad'])->whereNumber('turno')->name('turnos.actividades.store');
@@ -92,4 +102,9 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin', 'log.u
     Route::post('muebles', [MuebleController::class, 'store'])->name('muebles.store');
     Route::put('muebles/{mueble}', [MuebleController::class, 'update'])->name('muebles.update');
     Route::delete('muebles/{mueble}', [MuebleController::class, 'destroy'])->name('muebles.destroy');
+});
+
+Route::prefix('admin')->name('admin.')->middleware(['auth', 'account.configured', 'role:admin,editor', 'log.user.action'])->group(function () {
+    Route::resource('noticias', NoticiaController::class)->except(['show']);
+    Route::resource('enlaces', EnlacePublicoController::class)->except(['show']);
 });

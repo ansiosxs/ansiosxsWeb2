@@ -18,18 +18,11 @@ class CrearVoluntario extends Command
     {
         $datos = [
             'name' => $this->ask('Nombre'),
-            'email' => $this->ask('Correo electrónico'),
-            'password' => $this->secret('Contraseña (mínimo 12 caracteres)'),
+            'password' => $this->secret('Contraseña provisional (mínimo 12 caracteres)'),
         ];
 
         $validator = Validator::make($datos, [
             'name' => ['required', 'string', 'max:255'],
-            'email' => array_filter([
-                'required',
-                'email',
-                'max:255',
-                $this->option('sql') ? null : 'unique:users,email',
-            ]),
             'password' => ['required', 'string', Password::min(12)],
         ]);
 
@@ -41,21 +34,31 @@ class CrearVoluntario extends Command
             return self::FAILURE;
         }
 
+        $usuario = $validator->validated();
+
         if ($this->option('sql')) {
             $quote = static fn (string $value): string => "'".str_replace("'", "''", $value)."'";
-            $usuario = $validator->validated();
             $hash = Hash::make($usuario['password']);
 
-            $this->line('INSERT INTO `users` (`name`, `email`, `password`) VALUES ('
-                .$quote($usuario['name']).', '
-                .$quote($usuario['email']).', '
-                .$quote($hash).');');
+            $this->line('INSERT INTO `users` (`name`, `email`, `password`, `must_change_password`)');
+            $this->line('VALUES (');
+            $this->line('    '.$quote($usuario['name']).',');
+            $this->line('    NULL,');
+            $this->line('    '.$quote($hash).',');
+            $this->line('    1');
+            $this->line(');');
             $this->info('No se creó una cuenta en esta base local. Ejecuta el INSERT en phpMyAdmin.');
 
             return self::SUCCESS;
         }
 
-        User::query()->create($validator->validated());
+        User::query()->create([
+            'name' => $usuario['name'],
+            'password' => $usuario['password'],
+            'role' => User::ROLE_VOLUNTARIO,
+            'activo' => true,
+            'must_change_password' => true,
+        ]);
         $this->info('Cuenta voluntaria creada.');
 
         return self::SUCCESS;

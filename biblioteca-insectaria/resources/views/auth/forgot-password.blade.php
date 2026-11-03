@@ -20,7 +20,7 @@
         <form method="post" action="{{ route('password.email') }}">
             @csrf
             <label for="email">Correo electrónico</label>
-            <input id="email" name="email" type="email" value="{{ old('email') }}" autocomplete="email" required autofocus>
+            <input id="email" name="email" type="email" maxlength="254" value="{{ old('email') }}" autocomplete="email" required autofocus>
             <button class="button" type="submit">Enviar enlace</button>
         </form>
         <a class="auth-back" href="{{ route('login') }}">Volver al inicio de sesión</a>

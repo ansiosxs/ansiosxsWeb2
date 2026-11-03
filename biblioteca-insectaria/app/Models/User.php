@@ -25,6 +25,7 @@ class User extends Authenticatable
         'password',
         'role',
         'activo',
+        'must_change_password',
     ];
 
     /**
@@ -48,11 +49,15 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'activo' => 'boolean',
+            'must_change_password' => 'boolean',
             'role' => 'string',
         ];
     }
 
     public const ROLE_ADMIN = 'admin';
+
+    public const ROLE_EDITOR = 'editor';
+
     public const ROLE_VOLUNTARIO = 'voluntario';
 
     public function isAdmin(): bool
@@ -62,7 +67,17 @@ class User extends Authenticatable
 
     public function isVolunteer(): bool
     {
-        return $this->role === self::ROLE_VOLUNTARIO;
+        return in_array($this->role, [self::ROLE_VOLUNTARIO, self::ROLE_EDITOR], true);
+    }
+
+    public function isEditor(): bool
+    {
+        return $this->role === self::ROLE_EDITOR;
+    }
+
+    public function needsAccountSetup(): bool
+    {
+        return $this->must_change_password || blank($this->email);
     }
 
     public function prestamosRegistrados(): HasMany
@@ -78,6 +93,11 @@ class User extends Authenticatable
     public function actionLogs(): HasMany
     {
         return $this->hasMany(UserActionLog::class, 'user_id');
+    }
+
+    public function noticias(): HasMany
+    {
+        return $this->hasMany(Noticia::class);
     }
 
     public function actorLogs(): HasMany

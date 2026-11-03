@@ -9,3 +9,4 @@ Artisan::command('inspire', function () {
 use Illuminate\Support\Facades\Schedule;
 
 Schedule::command('biblioteca:enviar-recordatorios')->dailyAt('09:00');
+Schedule::command('turnos:crear-borrador-siguiente')->lastDayOfMonth('23:50');

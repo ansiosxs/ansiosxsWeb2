@@ -15,11 +15,12 @@ CREATE TABLE `migrations` (
 CREATE TABLE `users` (
     `id` bigint unsigned NOT NULL AUTO_INCREMENT,
     `name` varchar(255) NOT NULL,
-    `email` varchar(255) NOT NULL,
+    `email` varchar(255) DEFAULT NULL,
     `email_verified_at` timestamp NULL DEFAULT NULL,
     `password` varchar(255) NOT NULL,
     `role` varchar(255) NOT NULL DEFAULT 'voluntario',
     `activo` tinyint(1) NOT NULL DEFAULT 1,
+    `must_change_password` tinyint(1) NOT NULL DEFAULT 0,
     `remember_token` varchar(100) DEFAULT NULL,
     `created_at` timestamp NULL DEFAULT NULL,
     `updated_at` timestamp NULL DEFAULT NULL,
@@ -223,6 +224,22 @@ CREATE TABLE `anuncios` (
         FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE `noticias` (
+    `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+    `titulo` varchar(255) NOT NULL,
+    `resumen` varchar(500) DEFAULT NULL,
+    `contenido` longtext NOT NULL,
+    `imagen` varchar(255) DEFAULT NULL,
+    `user_id` bigint unsigned NOT NULL,
+    `created_at` timestamp NULL DEFAULT NULL,
+    `updated_at` timestamp NULL DEFAULT NULL,
+    PRIMARY KEY (`id`),
+    KEY `noticias_created_at_index` (`created_at`),
+    KEY `noticias_user_id_foreign` (`user_id`),
+    CONSTRAINT `noticias_user_id_foreign`
+        FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE `recordatorios` (
     `id` bigint unsigned NOT NULL AUTO_INCREMENT,
     `prestamo_id` bigint unsigned NOT NULL,
@@ -364,4 +381,6 @@ INSERT INTO `migrations` (`migration`, `batch`) VALUES
     ('2026_10_20_000002_create_user_action_logs_table', 4),
     ('2026_10_28_000001_create_turnos_and_reportes_tables', 5),
     ('2026_10_28_000002_add_responsible_to_turno_actividades', 6),
-    ('2026_10_28_000003_add_assignment_notes_to_turno_days', 7);
+    ('2026_10_28_000003_add_assignment_notes_to_turno_days', 7),
+    ('2026_11_02_000001_add_account_setup_to_users_table', 8),
+    ('2026_11_02_000002_create_noticias_table', 9);

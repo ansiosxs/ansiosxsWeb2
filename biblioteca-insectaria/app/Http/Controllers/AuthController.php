@@ -7,8 +7,10 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
@@ -17,6 +19,10 @@ class AuthController extends Controller
     public function create(Request $request): View|RedirectResponse
     {
         if ($request->user()) {
+            if ($request->user()->needsAccountSetup()) {
+                return redirect()->route('account.setup');
+            }
+
             return redirect()->route('admin.dashboard');
         }
 
@@ -62,7 +68,55 @@ class AuthController extends Controller
         Auth::login($user, $request->boolean('remember'));
         $request->session()->regenerate();
 
+        if ($user->needsAccountSetup()) {
+            return redirect()->route('account.setup');
+        }
+
         return redirect()->intended(route('admin.dashboard'));
+    }
+
+    public function showAccountSetup(Request $request): View|RedirectResponse
+    {
+        if (! $request->user()->needsAccountSetup()) {
+            return redirect()->route('admin.dashboard');
+        }
+
+        return view('auth.complete-account');
+    }
+
+    public function completeAccountSetup(Request $request): RedirectResponse
+    {
+        $user = $request->user();
+        if (! $user->needsAccountSetup()) {
+            return redirect()->route('admin.dashboard');
+        }
+
+        $datos = $request->validate([
+            'email' => ['required', Rule::email()->strict(), 'max:254', Rule::unique('users', 'email')->ignore($user->id)],
+            'password' => [
+                'required',
+                'string',
+                'min:8',
+                'confirmed',
+                function (string $attribute, mixed $value, \Closure $fail) use ($user): void {
+                    if (Hash::check($value, $user->password)) {
+                        $fail('La nueva contraseña debe ser distinta de la contraseña provisional.');
+                    }
+                },
+            ],
+        ], [
+            'email.email' => 'Ingresa un correo electrónico con formato válido.',
+            'email.unique' => 'Este correo ya está registrado en otra cuenta.',
+        ]);
+
+        $user->forceFill([
+            'email' => $datos['email'],
+            'password' => Hash::make($datos['password']),
+            'must_change_password' => false,
+        ])->save();
+        $request->session()->regenerate();
+
+        return redirect()->route('admin.dashboard')->with('status', 'Tu cuenta quedó configurada correctamente.');
     }
 
     public function forgotPassword(): View
@@ -73,8 +127,9 @@ class AuthController extends Controller
     public function sendResetLink(Request $request): RedirectResponse
     {
         $request->validate([
-            'email' => ['required', 'email', 'exists:users,email'],
+            'email' => ['required', Rule::email()->strict(), 'max:254', 'exists:users,email'],
         ], [
+            'email.email' => 'Ingresa un correo electrónico con formato válido.',
             'email.exists' => 'No encontramos una cuenta asociada a ese correo.',
         ]);
 
@@ -83,11 +138,11 @@ class AuthController extends Controller
             return back()->withErrors(['email' => 'No podemos enviar un enlace a una cuenta desactivada.']);
         }
 
-        $status = \Illuminate\Support\Facades\Password::sendResetLink(
+        $status = Password::sendResetLink(
             $request->only('email')
         );
 
-        return $status === \Illuminate\Support\Facades\Password::RESET_LINK_SENT
+        return $status === Password::RESET_LINK_SENT
             ? back()->with('status', 'Te hemos enviado un correo para restablecer tu contraseña.')
             : back()->withErrors(['email' => __($status)]);
     }
@@ -101,8 +156,10 @@ class AuthController extends Controller
     {
         $request->validate([
             'token' => ['required', 'string'],
-            'email' => ['required', 'email', 'exists:users,email'],
+            'email' => ['required', Rule::email()->strict(), 'max:254', 'exists:users,email'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
+        ], [
+            'email.email' => 'Ingresa un correo electrónico con formato válido.',
         ]);
 
         $usuario = User::query()->where('email', $request->input('email'))->first();
@@ -110,7 +167,7 @@ class AuthController extends Controller
             return back()->withErrors(['email' => 'No se puede restablecer la contraseña de una cuenta desactivada.']);
         }
 
-        $status = \Illuminate\Support\Facades\Password::reset(
+        $status = Password::reset(
             $request->only('email', 'password', 'password_confirmation', 'token'),
             function (User $user, string $password) {
                 $user->forceFill([
@@ -119,7 +176,7 @@ class AuthController extends Controller
             }
         );
 
-        return $status === \Illuminate\Support\Facades\Password::PASSWORD_RESET
+        return $status === Password::PASSWORD_RESET
             ? redirect()->route('login')->with('status', 'Tu contraseña se ha restablecido correctamente.')
             : back()->withErrors(['email' => __($status)]);
     }

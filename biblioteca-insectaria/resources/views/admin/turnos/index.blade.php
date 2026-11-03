@@ -4,13 +4,13 @@
 <div class="page-heading">
     <div><p class="eyebrow">Organización de voluntariado</p><h2>Turnos y actividades</h2></div>
     @if (auth()->user()->isAdmin())
-        <a class="button" href="{{ route('admin.turnos.create') }}">Crear calendario mensual</a>
+        <a class="button" href="{{ route('admin.turnos.create') }}">Crear borrador mensual</a>
     @endif
 </div>
 <section class="panel">
     <h3>Calendarios mensuales</h3>
     <div class="table-wrap"><table>
-        <thead><tr><th>Mes</th><th>Estado</th><th>Días de apertura</th><th>Disponibilidades</th><th></th></tr></thead>
+        <thead><tr><th>Mes</th><th>Estado</th><th>Días del mes</th><th>Participantes</th><th></th></tr></thead>
         <tbody>
         @forelse ($turnos as $turno)
             <tr>

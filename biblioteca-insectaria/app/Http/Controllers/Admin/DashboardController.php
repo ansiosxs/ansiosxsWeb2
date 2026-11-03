@@ -3,8 +3,10 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Anuncio;
 use App\Models\Prestamo;
 use App\Models\Socio;
+use App\Support\RichTextSanitizer;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -14,8 +16,23 @@ use Illuminate\View\View;
 
 class DashboardController extends Controller
 {
-    public function __invoke(Request $request): View
+    public function __invoke(Request $request, RichTextSanitizer $htmlSanitizer): View
     {
+        $anuncios = Anuncio::query()
+            ->whereDate('publicar_desde', '<=', today())
+            ->where(fn ($query) => $query->whereNull('publicar_hasta')->orWhereDate('publicar_hasta', '>=', today()))
+            ->latest('publicar_desde')
+            ->get()
+            ->each(fn (Anuncio $anuncio) => $anuncio->setAttribute(
+                'cuerpo_html',
+                $htmlSanitizer->sanitize($anuncio->cuerpo) ?? '',
+            ));
+        $mostrarDialogoAnuncios = $anuncios->isNotEmpty()
+            && ! $request->session()->get('dashboard_announcements_seen', false);
+        if ($mostrarDialogoAnuncios) {
+            $request->session()->put('dashboard_announcements_seen', true);
+        }
+
         $yearExpression = DB::connection()->getDriverName() === 'sqlite'
             ? "strftime('%Y', fecha_prestamo)"
             : 'YEAR(fecha_prestamo)';
@@ -60,6 +77,8 @@ class DashboardController extends Controller
         $maxComuna = max(1, (int) $comunas->max('total'));
 
         return view('admin.dashboard', [
+            'anuncios' => $anuncios,
+            'mostrarDialogoAnuncios' => $mostrarDialogoAnuncios,
             'prestamosMes' => $meses,
             'maxPrestamosMes' => $maxPrestamosMes,
             'aniosDisponibles' => $years,

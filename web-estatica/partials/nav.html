@@ -1,0 +1,47 @@
+<nav class="nav {{homeClass}}" aria-label="Navegación principal">
+  <div class="container nav__inner">
+    <a class="nav__logo" href="index.html" aria-label="Ansiosxs – Nuevas Lecturas, inicio">
+      <img src="images/logo.png" alt="Ansiosxs Nuevas Lecturas">
+    </a>
+
+    <div class="nav__links">
+      <a href="index.html" data-nav-key="home">Inicio</a>
+      <a href="quienes-somos.html" data-nav-key="about">Quienes somos</a>
+      <div class="nav__item nav__item--dropdown">
+        <a href="proyectos.html" data-nav-key="projects">Proyectos <svg class="icon nav__caret" aria-hidden="true"><use href="#i-chevron-down"></use></svg></a>
+        <div class="dropdown">
+          <a href="proyectos.html#te-leo-te-dibujo">Te leo, te dibujo</a>
+          <a href="proyectos.html#insectaria">Biblioteca comunitaria Insectaria</a>
+          <a href="proyectos.html#bibliomovil">Bibliomóvil</a>
+          <a href="proyectos.html#talleres">Talleres Crea-Expresa</a>
+          <a href="proyectos.html#colaboraciones">Colaboraciones</a>
+        </div>
+      </div>
+      <a href="noticias.html" data-nav-key="news">Noticias</a>
+      <a href="como-colaborar.html" data-nav-key="collaborate">Como colaborar</a>
+      <a href="contacto.html" data-nav-key="contact">Contacto</a>
+      <a href="http://127.0.0.1:8001/">Catálogo</a>
+    </div>
+
+    <button class="nav__toggle" type="button" aria-label="Abrir menú" aria-expanded="false" aria-controls="menu-movil">
+      <svg class="icon icon-lg" aria-hidden="true"><use href="#i-menu"></use></svg>
+    </button>
+  </div>
+
+  <div class="mobile-menu" id="menu-movil">
+    <a href="index.html" data-nav-key="home">Inicio</a>
+    <a href="quienes-somos.html" data-nav-key="about">Quienes somos</a>
+    <a href="proyectos.html" data-nav-key="projects">Proyectos</a>
+    <div class="mobile-menu__sub">
+      <a href="proyectos.html#te-leo-te-dibujo">Te leo, te dibujo</a>
+      <a href="proyectos.html#insectaria">Biblioteca comunitaria Insectaria</a>
+      <a href="proyectos.html#bibliomovil">Bibliomóvil</a>
+      <a href="proyectos.html#talleres">Talleres Crea-Expresa</a>
+      <a href="proyectos.html#colaboraciones">Colaboraciones</a>
+    </div>
+    <a href="noticias.html" data-nav-key="news">Noticias</a>
+    <a href="como-colaborar.html" data-nav-key="collaborate">Como colaborar</a>
+    <a href="contacto.html" data-nav-key="contact">Contacto</a>
+    <a href="http://127.0.0.1:8001/">Catálogo</a>
+  </div>
+</nav>

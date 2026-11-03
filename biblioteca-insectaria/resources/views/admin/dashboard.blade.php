@@ -10,6 +10,43 @@
         <img class="dashboard-mascot" src="{{ asset('mascotas/lobo.png') }}" alt="" aria-hidden="true">
     </div>
 </section>
+@if ($anuncios->isNotEmpty())
+    <section class="panel mb-6" aria-labelledby="dashboard-announcements-title">
+        <h2 id="dashboard-announcements-title" class="font-display font-bold text-[#35234f]">Anuncios vigentes</h2>
+        <div class="mt-4 space-y-4">
+            @foreach ($anuncios as $anuncio)
+                <article class="rounded-xl border-2 border-[#e7e0d8] p-4">
+                    <h3 class="font-bold text-[#35234f]">{{ $anuncio->titulo }}</h3>
+                    <div class="mt-2 text-[#514b58]">{!! $anuncio->cuerpo_html !!}</div>
+                </article>
+            @endforeach
+        </div>
+    </section>
+    @if ($mostrarDialogoAnuncios)
+    <dialog
+        x-init="$nextTick(() => { if (!$el.open) $el.showModal(); $refs.closeButton.focus(); })"
+        @cancel.prevent
+        class="m-auto max-h-[85vh] w-[min(42rem,calc(100vw-2rem))] overflow-y-auto rounded-2xl border-2 border-[#8a6500] bg-[#fff4c2] p-6 text-[#35234f] shadow-2xl backdrop:bg-[#1f1633]/70"
+        role="alertdialog"
+        aria-modal="true"
+        aria-labelledby="announcement-dialog-title"
+        data-announcement-dialog
+    >
+        <h2 id="announcement-dialog-title" class="font-display text-xl font-bold">Avisos importantes</h2>
+        <div class="mt-4 space-y-4">
+            @foreach ($anuncios as $anuncio)
+                <article class="rounded-xl border border-[#8a6500]/40 bg-white/70 p-4">
+                    <h3 class="font-bold">{{ $anuncio->titulo }}</h3>
+                    <div class="mt-2">{!! $anuncio->cuerpo_html !!}</div>
+                </article>
+            @endforeach
+        </div>
+        <div class="mt-6 flex justify-center">
+            <button x-ref="closeButton" class="button" type="button" autofocus @click="$el.closest('dialog').close()">Cerrar avisos</button>
+        </div>
+    </dialog>
+    @endif
+@endif
 <div class="stats-grid">
     <article class="stat-card"><span class="font-semibold text-[#716c77]">Socios con membresía vigente</span><strong>{{ $sociosActivos }}</strong><span class="text-sm text-[#716c77]">Membresías activas</span></article>
     <article class="stat-card"><span class="font-semibold text-[#716c77]">Unidades vencidas</span><strong class="text-[#a62837]">{{ $morosos }}</strong><a class="font-bold" href="{{ route('admin.morosidad') }}">Revisar morosidad <span aria-hidden="true">→</span></a></article>
