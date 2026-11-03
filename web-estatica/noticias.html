@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Noticias - Ansiosxs – Nuevas Lecturas</title>
+  <meta name="description" content="Noticias, actividades y novedades de Ansiosxs – Nuevas Lecturas.">
+  <meta name="robots" content="index, follow, max-image-preview:large">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="es_CL">
+  <meta property="og:site_name" content="Ansiosxs – Nuevas Lecturas">
+  <meta property="og:title" content="Noticias - Ansiosxs – Nuevas Lecturas">
+  <meta property="og:description" content="Noticias, actividades y novedades de Ansiosxs – Nuevas Lecturas.">
+  <meta property="og:url" content="https://www.ansiosxs.cl/noticias.html">
+  <meta property="og:image" content="https://www.ansiosxs.cl/images/logocircular.png">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Noticias - Ansiosxs – Nuevas Lecturas">
+  <meta name="twitter:description" content="Noticias, actividades y novedades de Ansiosxs – Nuevas Lecturas.">
+  <meta name="twitter:image" content="https://www.ansiosxs.cl/images/logocircular.png">
+  <link rel="canonical" href="https://www.ansiosxs.cl/noticias.html">
+  <meta name="api-base-url" content="https://biblioteca.ansiosxs.cl/api">
+  <link rel="icon" type="image/png" href="images/logocircular.png">
+  <link rel="apple-touch-icon" href="images/logocircular.png">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body data-page="news">
+  <a class="skip-link" href="#main-content">Saltar al contenido principal</a>
+<nav class="nav " aria-label="Navegación principal">
+  <div class="container nav__inner">
+    <a class="nav__logo" href="index.html" aria-label="Ansiosxs – Nuevas Lecturas, inicio">
+      <img src="images/logo.png" alt="Ansiosxs Nuevas Lecturas">
+    </a>
+
+    <div class="nav__links">
+      <a href="index.html">Inicio</a>
+      <a href="quienes-somos.html">Quienes somos</a>
+      <div class="nav__item nav__item--dropdown">
+        <a href="proyectos.html">Proyectos <svg class="icon nav__caret" aria-hidden="true"><use href="#i-chevron-down"></use></svg></a>
+        <div class="dropdown">
+          <a href="proyectos.html#te-leo-te-dibujo">Te leo, te dibujo</a>
+          <a href="proyectos.html#insectaria">Biblioteca comunitaria Insectaria</a>
+          <a href="proyectos.html#bibliomovil">Bibliomóvil</a>
+          <a href="proyectos.html#talleres">Talleres Crea-Expresa</a>
+          <a href="proyectos.html#colaboraciones">Colaboraciones</a>
+        </div>
+      </div>
+      <a href="noticias.html" class="is-active" aria-current="page">Noticias</a>
+      <a href="como-colaborar.html">Como colaborar</a>
+      <a href="contacto.html">Contacto</a>
+      <a href="http://127.0.0.1:8001/">Catálogo</a>
+    </div>
+
+    <button class="nav__toggle" type="button" aria-label="Abrir menú" aria-expanded="false" aria-controls="menu-movil">
+      <svg class="icon icon-lg" aria-hidden="true"><use href="#i-menu"></use></svg>
+    </button>
+  </div>
+
+  <div class="mobile-menu" id="menu-movil">
+    <a href="index.html">Inicio</a>
+    <a href="quienes-somos.html">Quienes somos</a>
+    <a href="proyectos.html">Proyectos</a>
+    <div class="mobile-menu__sub">
+      <a href="proyectos.html#te-leo-te-dibujo">Te leo, te dibujo</a>
+      <a href="proyectos.html#insectaria">Biblioteca comunitaria Insectaria</a>
+      <a href="proyectos.html#bibliomovil">Bibliomóvil</a>
+      <a href="proyectos.html#talleres">Talleres Crea-Expresa</a>
+      <a href="proyectos.html#colaboraciones">Colaboraciones</a>
+    </div>
+    <a href="noticias.html" class="is-active" aria-current="page">Noticias</a>
+    <a href="como-colaborar.html">Como colaborar</a>
+    <a href="contacto.html">Contacto</a>
+    <a href="http://127.0.0.1:8001/">Catálogo</a>
+  </div>
+</nav>
+
+
+
+
+  <main id="main-content" tabindex="-1">
+    <div class="page-top">
+      <section class="section bg-purple-soft">
+        <img class="mascot mascot--ave-sm" src="images/mascotas/ave.png" alt="" aria-hidden="true">
+        <div class="container container-text text-center">
+          <h1 class="font-cookie text-purple mb-4" style="font-size: clamp(2.25rem, 5vw, 3rem);">Noticias</h1>
+          <p class="text-soft" style="font-size: 1.125rem;">Novedades, actividades e historias de nuestra comunidad.</p>
+        </div>
+      </section>
+      <section id="news-listing" class="section bg-white">
+        <img class="mascot mascot--serpi-right" src="images/mascotas/serpi.png" alt="" aria-hidden="true">
+        <div class="container">
+          <div id="news-feedback" class="news-feedback" role="status" aria-live="polite">Cargando noticias…</div>
+          <div id="news-grid" class="news-grid mt-8"></div>
+          <div class="text-center mt-8"><button id="news-more" class="btn btn-lg btn-yellow" type="button" hidden>Cargar más noticias</button></div>
+        </div>
+      </section>
+      <section id="news-article" class="section bg-white" hidden>
+        <img class="mascot mascot--ave-sm" src="images/mascotas/ave.png" alt="" aria-hidden="true">
+        <article class="container news-detail">
+          <div id="news-article-cover" class="news-detail__cover news-detail__cover--no-image">
+            <a class="news-detail__back" href="noticias.html">← Volver a noticias</a>
+            <img id="news-article-image" class="news-detail__image" alt="" hidden>
+            <div class="news-detail__cover-copy">
+              <p id="news-article-date" class="news-detail__date"></p>
+              <h1 id="news-article-title" class="font-serif"></h1>
+            </div>
+          </div>
+          <div class="news-detail__body">
+            <div id="news-article-summary" class="news-detail__summary" hidden></div>
+            <div id="news-article-content" class="news-detail__content"></div>
+            <div class="news-detail__actions">
+              <button id="news-share" class="btn btn-lg btn-yellow" type="button">Compartir noticia</button>
+              <input id="news-share-url" class="news-share-url" type="url" readonly hidden aria-label="Enlace para compartir">
+              <p id="news-share-feedback" class="news-feedback" role="status" aria-live="polite"></p>
+            </div>
+          </div>
+        </article>
+      </section>
+    </div>
+  </main>
+
+  <footer class="footer">
+  <div class="container" style="padding-block: 3rem;">
+    <div class="footer__grid">
+      <div>
+        <a href="index.html" class="flex items-center mb-4" aria-label="Ansiosxs – Nuevas Lecturas, inicio">
+          <img src="images/logo.png" alt="Ansiosxs Nuevas Lecturas" style="height: 2.5rem; width: auto;">
+        </a>
+        <p class="text-soft mb-4" style="max-width: 28rem;">Un laboratorio creativo que explora la lectura más allá del papel. Llevamos las narrativas al territorio, al cuerpo y a lo colectivo, creando un cambio a través del arte.</p>
+        <div class="social">
+          <a href="https://www.instagram.com/ansiosxs" target="_blank" rel="noopener noreferrer" aria-label="Instagram" class="social-instagram"><svg class="icon" aria-hidden="true"><use href="#i-instagram"></use></svg></a>
+          <a href="https://www.facebook.com/Ansiosxs/" target="_blank" rel="noopener noreferrer" aria-label="Facebook" class="social-facebook"><svg class="icon" aria-hidden="true"><use href="#i-facebook"></use></svg></a>
+          <a href="https://www.youtube.com/channel/UCMWvXVIqLlI72pXkdeWM62g" target="_blank" rel="noopener noreferrer" aria-label="YouTube" class="social-youtube"><svg class="icon" aria-hidden="true"><use href="#i-youtube"></use></svg></a>
+          <a href="https://www.linkedin.com/company/ong-ansiosxs-nuevas-lecturas/?viewAsMember=true" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn" class="social-linkedin"><svg class="icon" aria-hidden="true"><use href="#i-linkedin"></use></svg></a>
+          <a href="mailto:ansiosxs@gmail.com" aria-label="Enviar correo" class="social-mail"><svg class="icon" aria-hidden="true"><use href="#i-mail"></use></svg></a>
+        </div>
+      </div>
+
+      <div>
+        <span class="footer__title">Enlaces Rápidos</span>
+        <ul class="footer__list">
+          <li><a href="quienes-somos.html">Quienes Somos</a></li>
+          <li><a href="proyectos.html">Proyectos</a></li>
+          <li><a href="noticias.html">Noticias</a></li>
+          <li><a href="como-colaborar.html">Como Colaborar</a></li>
+          <li><a href="contacto.html">Contacto</a></li>
+          <li><a href="enlaces.html">Todos nuestros enlaces</a></li>
+        </ul>
+      </div>
+
+      <div>
+        <span class="footer__title">Contacto</span>
+        <ul class="footer__list footer__contact">
+          <li>
+            <svg class="icon icon-sm" aria-hidden="true"><use href="#i-mail"></use></svg>
+            <a href="mailto:ansiosxs@gmail.com">ansiosxs@gmail.com</a>
+          </li>
+          <li>
+            <svg class="icon icon-sm" aria-hidden="true"><use href="#i-phone"></use></svg>
+            <span>+56 9 44326527</span>
+          </li>
+          <li>
+            <svg class="icon icon-sm" aria-hidden="true"><use href="#i-map-pin"></use></svg>
+            <span>Juan Martínez de Rozas 1445, Concepción, Bío Bío</span>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="footer__bottom">
+      <p>© <span data-year>2025</span> Ansiosxs – Nuevas Lecturas. Todos los derechos reservados.</p>
+    </div>
+  </div>
+</footer>
+
+  <script src="js/icons.js" defer></script>
+  <script src="js/main.js" defer></script>
+  <script src="js/noticias.js" defer></script>
+</body>
+</html>
