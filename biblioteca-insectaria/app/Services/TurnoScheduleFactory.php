@@ -48,25 +48,26 @@ class TurnoScheduleFactory
                 ->where('year', $previousMonth->year)
                 ->where('month', $previousMonth->month)
                 ->first();
-            $previousParticipation = $previousSchedule
-                ? $previousSchedule->availabilities()->pluck('participates', 'user_id')
+            $previousAvailabilities = $previousSchedule
+                ? $previousSchedule->availabilities()->get()->keyBy('user_id')
                 : collect();
+            $users = User::query()->where('activo', true)->get();
             $profiles = TurnoVolunteerProfile::query()
-                ->whereHas('volunteer', fn ($query) => $query
-                    ->where('role', User::ROLE_VOLUNTARIO)
-                    ->where('activo', true))
-                ->with('volunteer')
-                ->get();
+                ->whereIn('user_id', $users->pluck('id'))
+                ->get()
+                ->keyBy('user_id');
 
-            foreach ($profiles as $profile) {
+            foreach ($users as $user) {
+                $profile = $profiles->get($user->id);
+                $previousAvailability = $previousAvailabilities->get($user->id);
                 TurnoAvailability::create([
                     'turno_schedule_id' => $schedule->id,
-                    'user_id' => $profile->user_id,
-                    'weekdays' => $profile->weekdays ?? [],
+                    'user_id' => $user->id,
+                    'weekdays' => $previousAvailability?->weekdays ?? $profile?->weekdays ?? [],
                     'date_overrides' => [],
-                    'participates' => $profile->enabled
-                        && (bool) $previousParticipation->get($profile->user_id, false),
-                    'monthly_turns' => $profile->monthly_turns,
+                    'participates' => (bool) ($profile?->enabled ?? false)
+                        && (bool) ($previousAvailability?->participates ?? false),
+                    'monthly_turns' => $profile?->monthly_turns ?? 2,
                 ]);
             }
 

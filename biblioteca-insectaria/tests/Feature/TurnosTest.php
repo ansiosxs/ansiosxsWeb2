@@ -47,12 +47,13 @@ class TurnosTest extends TestCase
     {
         $admin = User::factory()->create(['role' => User::ROLE_ADMIN]);
         $volunteer = User::factory()->create(['role' => User::ROLE_VOLUNTARIO]);
+        $editor = User::factory()->create(['role' => User::ROLE_EDITOR]);
         $schedule = $this->createSchedule($admin);
 
         $this->actingAs($admin)
             ->get(route('admin.turnos.show', $schedule))
             ->assertOk()
-            ->assertSee('Voluntarios que pueden abrir')
+            ->assertSee('Personas que pueden abrir')
             ->assertSee(route('admin.usuarios.create'), false)
             ->assertSee(route('admin.usuarios.edit', $volunteer), false)
             ->assertSee(route('admin.usuarios.destroy', $volunteer), false)
@@ -60,7 +61,10 @@ class TurnosTest extends TestCase
             ->assertSee('Editar')
             ->assertSee('Eliminar')
             ->assertSee('Participa este mes')
-            ->assertSee($volunteer->name);
+            ->assertSee($volunteer->name)
+            ->assertSee($editor->name)
+            ->assertSee($admin->name)
+            ->assertDontSee('form id="eliminar-voluntario-' . $admin->id . '"', false);
 
         $this->put(route('admin.turnos.voluntarios.update', $schedule), [
             'volunteers' => [
@@ -70,6 +74,12 @@ class TurnosTest extends TestCase
                     'weekdays' => [1, 3],
                     'monthly_turns' => 4,
                 ],
+                $editor->id => [
+                    'enabled' => 1,
+                    'participates' => 1,
+                    'weekdays' => [1],
+                    'monthly_turns' => 1,
+                ],
             ],
         ])->assertRedirect(route('admin.turnos.show', $schedule));
 
@@ -78,14 +88,41 @@ class TurnosTest extends TestCase
         $this->assertSame([1, 3], $profile->weekdays);
         $this->assertSame(4, $profile->monthly_turns);
 
-        $availability = TurnoAvailability::query()->where('turno_schedule_id', $schedule->id)->firstOrFail();
+        $availability = TurnoAvailability::query()
+            ->where('turno_schedule_id', $schedule->id)
+            ->where('user_id', $volunteer->id)
+            ->firstOrFail();
         $this->assertSame([1, 3], $availability->weekdays);
         $this->assertTrue($availability->participates);
         $this->assertSame(4, $availability->monthly_turns);
 
+        $editorAvailability = TurnoAvailability::query()
+            ->where('turno_schedule_id', $schedule->id)
+            ->where('user_id', $editor->id)
+            ->firstOrFail();
+        $this->assertTrue($editorAvailability->participates);
+        $result = app(TurnoScheduler::class)->generate($schedule);
+        $this->assertSame(5, $result['assigned']);
+        $editorAssignedDay = $schedule->days()
+            ->whereHas('volunteers', fn ($query) => $query->where('users.id', $editor->id))
+            ->firstOrFail();
+        $this->assertSame(1, $editorAssignedDay->date->dayOfWeekIso);
+
+        $manualDay = $schedule->days()->whereDate('date', '2026-11-03')->firstOrFail();
+        $this->actingAs($admin)
+            ->put(route('admin.turnos.dias.update', [$schedule, $manualDay]), [
+                'is_open' => 1,
+                'volunteers' => [$editor->id],
+            ])
+            ->assertRedirect(route('admin.turnos.show', $schedule));
+        $this->assertDatabaseHas('turno_asignaciones', [
+            'turno_dia_id' => $manualDay->id,
+            'user_id' => $editor->id,
+        ]);
+
         $this->actingAs($volunteer)->get(route('admin.turnos.show', $schedule))
             ->assertOk()
-            ->assertDontSee('Voluntarios que pueden abrir');
+            ->assertDontSee('Personas que pueden abrir');
     }
 
     public function test_admin_cannot_delete_volunteer_with_turno_history(): void
@@ -130,7 +167,7 @@ class TurnosTest extends TestCase
         ]);
         $previousSchedule->availabilities()->create([
             'user_id' => $volunteer->id,
-            'weekdays' => [1, 4],
+            'weekdays' => [2, 5],
             'date_overrides' => [],
             'participates' => true,
             'monthly_turns' => 3,
@@ -144,7 +181,7 @@ class TurnosTest extends TestCase
         $schedule = TurnoSchedule::query()->where('year', 2026)->where('month', 11)->firstOrFail();
         $availability = $schedule->availabilities()->where('user_id', $volunteer->id)->firstOrFail();
         $this->assertSame(30, $schedule->days()->count());
-        $this->assertSame([1, 4], $availability->weekdays);
+        $this->assertSame([2, 5], $availability->weekdays);
         $this->assertTrue($availability->participates);
         $this->assertSame(3, $availability->monthly_turns);
         $this->assertSame(3, DB::table('turno_asignaciones')

@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Models\TurnoSchedule;
-use App\Models\User;
 use Illuminate\Support\Facades\DB;
 
 class TurnoScheduler
@@ -20,9 +19,7 @@ class TurnoScheduler
             $availabilities = $schedule->availabilities()
                 ->with('volunteer')
                 ->where('participates', true)
-                ->whereHas('volunteer', fn ($query) => $query
-                    ->where('role', User::ROLE_VOLUNTARIO)
-                    ->where('activo', true))
+                ->whereHas('volunteer', fn ($query) => $query->where('activo', true))
                 ->get();
 
             $eligibleDaysByVolunteer = [];

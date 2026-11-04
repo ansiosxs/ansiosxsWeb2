@@ -19,10 +19,10 @@
 @if (auth()->user()->isAdmin() && $turno->status === 'draft')
     <section class="panel">
         <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
-            <h3>Voluntarios que pueden abrir</h3>
+            <h3>Personas que pueden abrir</h3>
             <a class="button button-secondary" href="{{ route('admin.usuarios.create') }}">Agregar voluntario</a>
         </div>
-        <p>Activa a quienes pueden tomar turnos, marca si participan en {{ $turno->month_label }} y define sus días preferidos y cantidad de turnos (2 por defecto). La participación del mes anterior se copia automáticamente.</p>
+        <p>Activa a quienes pueden tomar turnos, marca si participan en {{ $turno->month_label }} y define sus días preferidos y cantidad de turnos (2 por defecto). La participación y los días preferidos del mes anterior se copian automáticamente.</p>
         <form method="post" action="{{ route('admin.turnos.voluntarios.update', $turno) }}">
             @csrf @method('put')
             <div class="table-wrap">
@@ -53,7 +53,9 @@
                             <td>
                                 <div class="flex flex-wrap gap-2">
                                     <a class="button button-secondary" href="{{ route('admin.usuarios.edit', $voluntario) }}">Editar</a>
-                                    <button class="button button-danger" type="submit" form="eliminar-voluntario-{{ $voluntario->id }}">Eliminar</button>
+                                    @if ($voluntario->role === \App\Models\User::ROLE_VOLUNTARIO)
+                                        <button class="button button-danger" type="submit" form="eliminar-voluntario-{{ $voluntario->id }}">Eliminar</button>
+                                    @endif
                                 </div>
                             </td>
                         </tr>
@@ -63,7 +65,7 @@
             </div>
             <button class="button button-secondary mt-4" type="submit">Guardar lista y preferencias</button>
         </form>
-        @foreach ($voluntarios as $voluntario)
+        @foreach ($voluntarios->where('role', \App\Models\User::ROLE_VOLUNTARIO) as $voluntario)
             <form id="eliminar-voluntario-{{ $voluntario->id }}" method="post" action="{{ route('admin.usuarios.destroy', $voluntario) }}" data-confirm="¿Eliminar permanentemente la cuenta de {{ $voluntario->name }}? Solo se podrá eliminar si no tiene historial asociado.">
                 @csrf @method('delete')
             </form>

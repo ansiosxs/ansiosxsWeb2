@@ -13,7 +13,7 @@
             @endforeach
         </select></label>
     </div>
-    <p class="muted">El borrador también se crea automáticamente el último día de cada mes para el mes siguiente. La participación se copia del calendario anterior y puedes cambiarla antes de generar la propuesta.</p>
+    <p class="muted">El borrador también se crea automáticamente el último día de cada mes para el mes siguiente. La participación y los días preferidos se copian del calendario anterior y puedes cambiarlos antes de generar la propuesta.</p>
     <button class="button" type="submit">Crear o abrir borrador</button>
 </form>
 @endsection

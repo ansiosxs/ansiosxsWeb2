@@ -68,7 +68,7 @@ class TurnoController extends Controller
     public function show(TurnoSchedule $turno): View
     {
         $turno->load(['days.volunteers', 'activities', 'availabilities.volunteer']);
-        $volunteers = User::query()->where('role', User::ROLE_VOLUNTARIO)->where('activo', true)->orderBy('name')->get();
+        $volunteers = User::query()->where('activo', true)->orderBy('name')->get();
         $profiles = TurnoVolunteerProfile::query()
             ->whereIn('user_id', $volunteers->pluck('id'))
             ->get()
@@ -97,16 +97,15 @@ class TurnoController extends Controller
             'volunteers.*.monthly_turns' => ['required', 'integer', 'between:0,31'],
         ]);
 
-        $activeVolunteers = User::query()
-            ->where('role', User::ROLE_VOLUNTARIO)
+        $activeUsers = User::query()
             ->where('activo', true)
             ->get()
             ->keyBy('id');
 
-        DB::transaction(function () use ($data, $activeVolunteers, $turno) {
+        DB::transaction(function () use ($data, $activeUsers, $turno) {
             foreach ($data['volunteers'] ?? [] as $userId => $volunteerData) {
-                $volunteer = $activeVolunteers->get((int) $userId);
-                abort_unless($volunteer, 422, 'La lista contiene una cuenta que no es voluntaria activa.');
+                $volunteer = $activeUsers->get((int) $userId);
+                abort_unless($volunteer, 422, 'La lista contiene una cuenta inactiva o inexistente.');
                 $weekdays = array_values(array_unique(array_map('intval', $volunteerData['weekdays'] ?? [])));
                 $enabled = (bool) $volunteerData['enabled'];
                 $participates = $enabled && (bool) $volunteerData['participates'];
@@ -132,7 +131,7 @@ class TurnoController extends Controller
             }
         });
 
-        return redirect()->route('admin.turnos.show', $turno)->with('status', 'La lista de voluntarios, sus preferencias y su participación mensual quedaron guardadas.');
+        return redirect()->route('admin.turnos.show', $turno)->with('status', 'La lista de personas habilitadas, sus preferencias y su participación mensual quedaron guardadas.');
     }
 
     public function generar(TurnoSchedule $turno, TurnoScheduler $scheduler): RedirectResponse
@@ -142,7 +141,7 @@ class TurnoController extends Controller
 
         if ($result['underassigned_volunteers'] > 0) {
             return redirect()->route('admin.turnos.show', $turno)
-                ->with('warning', "Se generó una propuesta, pero {$result['underassigned_volunteers']} voluntarios no tienen suficientes fechas disponibles para completar sus turnos del mes. Revisa sus preferencias o ajusta la asignación manualmente.");
+                ->with('warning', "Se generó una propuesta, pero {$result['underassigned_volunteers']} participantes no tienen suficientes fechas disponibles para completar sus turnos del mes. Revisa sus preferencias o ajusta la asignación manualmente.");
         }
 
         return redirect()->route('admin.turnos.show', $turno)
@@ -160,7 +159,7 @@ class TurnoController extends Controller
             'volunteers' => ['nullable', 'array'],
             'volunteers.*' => [
                 'integer',
-                Rule::exists('users', 'id')->where(fn ($query) => $query->where('role', User::ROLE_VOLUNTARIO)->where('activo', true)),
+                Rule::exists('users', 'id')->where(fn ($query) => $query->where('activo', true)),
             ],
         ]);
 
