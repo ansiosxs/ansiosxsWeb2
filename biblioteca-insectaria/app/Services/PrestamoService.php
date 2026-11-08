@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\ConfiguracionGeneral;
 use App\Models\Libro;
 use App\Models\Prestamo;
 use App\Models\Socio;
@@ -34,7 +35,9 @@ class PrestamoService
                     throw ValidationException::withMessages(['socio_id' => 'El socio no está activo.']);
                 }
 
-                if ($socio->vigente_hasta->lt(today())) {
+                $configuracion = ConfiguracionGeneral::actual();
+
+                if ($socio->vigente_hasta->lt(today()) && ! $configuracion->permitir_membresia_vencida) {
                     throw ValidationException::withMessages(['socio_id' => 'La membresía está vencida. Renueva antes de prestar libros.']);
                 }
 
@@ -55,7 +58,7 @@ class PrestamoService
                     ]);
                 }
 
-                $limite = (int) config('biblioteca.max_prestamos_activos');
+                $limite = $configuracion->max_prestamos_activos;
                 $prestadasSocio = $socio->unidadesPrestadas();
 
                 if ($prestadasSocio + $cantidad > $limite) {
@@ -73,7 +76,7 @@ class PrestamoService
                     'cantidad_devuelta' => 0,
                     'user_id' => $voluntario->id,
                     'fecha_prestamo' => $ahora,
-                    'fecha_vencimiento' => $ahora->copy()->addDays((int) config('biblioteca.plazo_prestamo_dias'))->toDateString(),
+                    'fecha_vencimiento' => $ahora->copy()->addDays($configuracion->plazo_prestamo_dias)->toDateString(),
                     'estado' => 'activo',
                     'operacion_uuid' => $operacionUuid,
                 ]);

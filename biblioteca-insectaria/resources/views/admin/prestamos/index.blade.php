@@ -31,7 +31,19 @@
         </div>
         <div class="grid-two">
             <label>Cantidad a prestar<input name="cantidad" type="number" min="1" max="1000000" value="{{ old('cantidad', 1) }}" required>@error('cantidad')<span class="field-error">{{ $message }}</span>@enderror</label>
-            <label>Socio<select name="socio_id" required><option value="">Selecciona un socio</option>@foreach ($socios as $socio)<option value="{{ $socio->id }}" @selected(old('socio_id') == $socio->id)>{{ $socio->apellidos }}, {{ $socio->nombres }} — {{ $socio->run }}</option>@endforeach</select>@error('socio_id')<span class="field-error">{{ $message }}</span>@enderror</label>
+            <label>Buscar socio por nombre o RUT
+                <input type="search" autocomplete="off" inputmode="search" data-socio-busqueda placeholder="Escribe nombre, apellido o RUT" aria-label="Buscar socio por nombre, apellido o RUT">
+            </label>
+            <label>Socio
+                <select name="socio_id" required data-socios-select>
+                    <option value="">Selecciona un socio</option>
+                    @foreach ($socios as $socio)
+                        <option value="{{ $socio->id }}" data-socio-nombre="{{ $socio->nombres }} {{ $socio->apellidos }}" data-socio-run="{{ $socio->run }}" @selected(old('socio_id') == $socio->id)>{{ $socio->apellidos }}, {{ $socio->nombres }} — {{ $socio->run }}</option>
+                    @endforeach
+                </select>
+                <span class="muted" data-socio-estado aria-live="polite">Escribe para filtrar la lista de socios.</span>
+                @error('socio_id')<span class="field-error">{{ $message }}</span>@enderror
+            </label>
         </div>
         <input type="hidden" name="operacion_uuid" value="{{ $operacionUuid }}">
         <button class="button" type="submit">Confirmar préstamo</button>

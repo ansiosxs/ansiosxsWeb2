@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Mail\RecordatorioVencimiento;
 use App\Models\Anuncio;
+use App\Models\ConfiguracionRecordatorio;
 use App\Models\Libro;
 use App\Models\Mueble;
 use App\Models\Prestamo;
@@ -807,6 +808,25 @@ class BibliotecaTest extends TestCase
             ->assertJsonPath('0.isbn', '978-0-000000-00-1');
     }
 
+    public function test_loan_form_can_search_members_by_name_or_run(): void
+    {
+        $voluntario = User::factory()->create();
+        $socio = $this->createMember([
+            'nombres' => 'María',
+            'apellidos' => 'Lectora',
+            'run' => '12345678-5',
+        ]);
+
+        $this->actingAs($voluntario)->get(route('admin.prestamos.index'))
+            ->assertOk()
+            ->assertSee('Buscar socio por nombre o RUT')
+            ->assertSee('data-socio-busqueda', false)
+            ->assertSee('data-socios-select', false)
+            ->assertSee('data-socio-nombre="María Lectora"', false)
+            ->assertSee('data-socio-run="12345678-5"', false)
+            ->assertSee('Lectora, María — 12345678-5');
+    }
+
     public function test_member_membership_expiration_actions_update_the_due_date(): void
     {
         $voluntario = User::factory()->create();
@@ -1025,6 +1045,20 @@ class BibliotecaTest extends TestCase
             ->assertJsonMissingPath('datos.0.socio')
             ->assertJsonMissingPath('datos.0.prestamos');
         $this->assertStringNotContainsString('Dato privado', $response->getContent());
+    }
+
+    public function test_signed_in_catalog_displays_book_edit_links_but_guest_does_not(): void
+    {
+        $guestResponse = $this->get(route('catalogo'));
+        $guestResponse->assertOk()->assertSee('data-edit-url=""', false);
+
+        $voluntario = User::factory()->create();
+        $authenticatedResponse = $this->actingAs($voluntario)->get(route('catalogo'));
+        $authenticatedResponse->assertOk()
+            ->assertSee(route('admin.libros.edit', ['libro' => '__LIBRO_ID__']), false);
+
+        $this->get(route('admin.libros.edit', $this->createBookAndStock('Editar desde catálogo')))
+            ->assertOk();
         $this->getJson('/api/catalogo?pagina=0')->assertStatus(422)
             ->assertJsonStructure(['mensaje', 'errores']);
     }
@@ -1204,6 +1238,10 @@ class BibliotecaTest extends TestCase
     public function test_us10_reminder_email_is_sent_and_recorded_only_once(): void
     {
         Mail::fake();
+        ConfiguracionRecordatorio::query()->findOrFail(1)->update([
+            'automaticos_activos' => true,
+            'preguntar_antes' => false,
+        ]);
         $voluntario = User::factory()->create();
         $socio = $this->createMember(['email' => 'lector@example.cl']);
         $libro = $this->createBookAndStock('Recordatorio');

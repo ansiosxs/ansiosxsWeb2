@@ -109,12 +109,21 @@ conserva una copia en
   normalizado, inscripción y renovación anual.
 - Préstamos transaccionales por libro y cantidad, con `lockForUpdate`, plazo
   configurable, límites de unidades por socio, morosidad y UUID idempotente.
+- Configuración general para ajustar duración y límite de préstamos, permitir
+  excepcionalmente préstamos con membresía vencida, definir la anticipación de
+  avisos y elegir qué secciones del menú y estadísticas aparecen. La visibilidad
+  del menú no modifica los permisos de acceso de cada rol.
 - Búsqueda de libros por título, autor o ISBN; los formularios de préstamos y
   alta/edición de libros pueden escanear códigos ISBN-13 con la cámara del
   dispositivo. En móviles, la cámara requiere HTTPS y permiso del navegador
   (localhost también funciona).
 - Devoluciones parciales por préstamo, días de atraso, lista de morosidad, lista telefónica y
   recordatorios de correo registrados para no repetirlos.
+- Administración de recordatorios automáticos de préstamos próximos/vencidos y
+  membresías vencidas. La función viene desactivada y requiere autorización
+  previa por defecto para evitar envíos accidentales; se activa desde
+  **Administración → Recordatorios**. Allí se pueden revisar, autorizar o
+  descartar correos y editar sus plantillas.
 - Portal público Vue, API de catálogo sin información de socios, búsqueda
   paginada y caché de la última consulta. Los anuncios vigentes se muestran
   en el resumen administrativo y como avisos flotantes cerrables, no en el
@@ -161,10 +170,16 @@ No subas `.env` al repositorio ni habilites `APP_DEBUG` en producción.
 
 2. Crea una base MySQL **vacía** en Ferozo. Si tienes terminal, ejecuta
    `php artisan migrate --force`. Si no la tienes, selecciona esa base en
-   phpMyAdmin e importa una vez el archivo `database/mysql-hosting.sql` del
-   paquete de producción, que crea las tablas de Laravel y de la biblioteca y
-   registra las migraciones como aplicadas. No importes ese archivo sobre
-   tablas existentes ni uses/exportes la SQLite local como esquema MySQL.
+   phpMyAdmin e importa una vez el esquema
+   `producción/biblioteca-insectaria-esquema-phpmyadmin.sql` (también disponible
+   como `database/mysql-hosting.sql` en el proyecto fuente). Crea las tablas,
+   enlaces públicos iniciales y registra todas las migraciones actuales como
+   aplicadas. Para copiar también los datos operativos de la SQLite local,
+   importa después `producción/biblioteca-insectaria-datos-phpmyadmin.sql`.
+   Ese volcado contiene información personal, préstamos y hashes de
+   contraseñas: mantenlo privado e impórtalo una sola vez, solo en una base sin
+   datos operativos. No importes el archivo SQLite directamente ni lo uses como
+   esquema MySQL.
    Si una primera importación falló y dejó tablas parciales, confirma que no
    contengan datos y elimina únicamente las tablas Laravel/Biblioteca antes de
    reimportar el esquema; nunca uses `DROP DATABASE` en una base compartida.
@@ -196,8 +211,10 @@ No subas `.env` al repositorio ni habilites `APP_DEBUG` en producción.
 7. Configura una tarea cron cada minuto que ejecute
    `php /ruta/biblioteca-insectaria/artisan schedule:run`. Laravel ejecutará los
    recordatorios diarios a las 09:00 y creará el borrador de turnos siguiente
-   el último día de cada mes a las 23:50. El comando de turnos también puede
-   ejecutarse manualmente con `php artisan turnos:crear-borrador-siguiente`.
+   el último día de cada mes a las 23:50. Los correos automáticos comienzan
+   desactivados y, al habilitarlos, requieren autorización previa por defecto.
+   El comando de turnos también puede ejecutarse manualmente con
+   `php artisan turnos:crear-borrador-siguiente`.
    Si el plan no permite cron, los procesos programados no se ejecutarán.
 8. Respaldar la base antes de cada actualización. Para desplegar cambios,
    compila primero `public/build/` en local y sube por FTP solo los archivos

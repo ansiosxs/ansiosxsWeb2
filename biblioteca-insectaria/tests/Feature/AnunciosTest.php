@@ -24,6 +24,30 @@ class AnunciosTest extends TestCase
             ->assertSee('href="https://www.ansiosxs.cl/" aria-label="Volver al sitio de Ansiosxs"', false);
     }
 
+    public function test_catalog_header_shows_access_link_to_guests(): void
+    {
+        $this->get(route('catalogo'))
+            ->assertOk()
+            ->assertSee('>Acceso</a>', false)
+            ->assertDontSee('Acceso voluntariado')
+            ->assertDontSee('Cerrar sesión');
+    }
+
+    public function test_catalog_header_shows_authenticated_user_and_logout_form(): void
+    {
+        $user = User::factory()->create(['name' => 'Camila Voluntaria']);
+
+        $this->actingAs($user)
+            ->get(route('catalogo'))
+            ->assertOk()
+            ->assertSee('Camila Voluntaria')
+            ->assertSee('href="'.route('admin.dashboard').'" aria-label="Ir al panel de administración">Panel</a>', false)
+            ->assertSee('action="'.route('logout').'"', false)
+            ->assertSee('name="_token"', false)
+            ->assertSee('>Cerrar sesión</button>', false)
+            ->assertDontSee('>Acceso</a>', false);
+    }
+
     public function test_admin_can_create_rich_text_announcements_safely(): void
     {
         $admin = User::factory()->create(['role' => User::ROLE_ADMIN]);

@@ -9,7 +9,18 @@
 <body class="public-page">
     <header class="public-header">
         <div class="public-header-inner"><a class="public-brand" href="{{ rtrim(config('cors.allowed_origins.0', 'https://www.ansiosxs.cl'), '/') }}/" aria-label="Volver al sitio de Ansiosxs"><img src="{{ asset('logo.png') }}" alt="Ansiosxs Nuevas Lecturas"></a>
-            <a href="{{ auth()->check() ? route('admin.dashboard') : route('login') }}">Acceso voluntariado</a>
+            <div class="public-header-actions">
+                @auth
+                    <span class="public-header-user">{{ auth()->user()->name }}</span>
+                    <a class="public-header-action" href="{{ route('admin.dashboard') }}" aria-label="Ir al panel de administración">Panel</a>
+                    <form method="post" action="{{ route('logout') }}">
+                        @csrf
+                        <button class="public-header-action" type="submit">Cerrar sesión</button>
+                    </form>
+                @else
+                    <a class="public-header-action" href="{{ route('login') }}">Acceso</a>
+                @endauth
+            </div>
         </div>
     </header>
     <main class="catalog-main">
@@ -22,7 +33,10 @@
             <article class="stat-card"><span class="font-semibold text-[#716c77]">Ejemplares disponibles</span><strong>{{ number_format($unidadesDisponibles, 0, ',', '.') }}</strong><span class="text-sm text-[#716c77]">Unidades disponibles para préstamo</span></article>
             <article class="stat-card"><span class="font-semibold text-[#716c77]">Títulos en catálogo</span><strong>{{ number_format($titulosCatalogo, 0, ',', '.') }}</strong><span class="text-sm text-[#716c77]">Libros registrados, sin contar ejemplares</span></article>
         </section>
-        <div id="catalog-app" data-muebles="{{ $muebles->toJson(JSON_UNESCAPED_UNICODE) }}" aria-live="polite"></div>
+        <div id="catalog-app"
+            data-muebles="{{ $muebles->toJson(JSON_UNESCAPED_UNICODE) }}"
+            data-edit-url="@auth{{ route('admin.libros.edit', ['libro' => '__LIBRO_ID__']) }}@endauth"
+            aria-live="polite"></div>
     </main>
     <footer class="public-footer">Biblioteca Comunitaria Insectaria · Los datos de disponibilidad pueden cambiar durante el día.</footer>
     <script>if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch((error) => console.error('No se pudo registrar el caché del catálogo:', error)));</script>

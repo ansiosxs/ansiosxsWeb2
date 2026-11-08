@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\ConfiguracionGeneral;
 use App\Models\Libro;
 use App\Models\Prestamo;
 use App\Models\Socio;
@@ -48,11 +49,14 @@ class PrestamoController extends Controller
         }
 
         $socios = Socio::query()->where('activo', true)->orderBy('apellidos')->orderBy('nombres')->get();
-        $contactar = Prestamo::query()->with(['socio', 'libro'])
-            ->where('estado', 'activo')
-            ->whereDate('fecha_vencimiento', today()->addDays((int) config('biblioteca.dias_recordatorio')))
-            ->whereHas('socio', fn ($query) => $query->whereNull('email')->orWhere('email', ''))
-            ->get();
+        $diasRecordatorio = ConfiguracionGeneral::actual()->dias_recordatorio;
+        $contactar = $diasRecordatorio === 0
+            ? collect()
+            : Prestamo::query()->with(['socio', 'libro'])
+                ->where('estado', 'activo')
+                ->whereDate('fecha_vencimiento', today()->addDays($diasRecordatorio))
+                ->whereHas('socio', fn ($query) => $query->whereNull('email')->orWhere('email', ''))
+                ->get();
 
         return view('admin.prestamos.index', [
             'prestamos' => $prestamos,
@@ -176,6 +180,32 @@ class PrestamoController extends Controller
         ], '', '&', PHP_QUERY_RFC3986);
 
         return redirect()->away($mailto);
+    }
+
+    public function confirmarPostergacion(Request $request, Prestamo $prestamo): View
+    {
+        $this->validarFechaPostergacion($request, $prestamo);
+        $prestamo->load('libro');
+
+        return view('recordatorios.postergar', ['prestamo' => $prestamo, 'postergado' => false]);
+    }
+
+    public function postergar(Request $request, Prestamo $prestamo): View
+    {
+        $this->validarFechaPostergacion($request, $prestamo);
+        $prestamo->update(['fecha_vencimiento' => $prestamo->fecha_vencimiento->copy()->addDays(14)]);
+        $prestamo->load('libro');
+
+        return view('recordatorios.postergar', ['prestamo' => $prestamo, 'postergado' => true]);
+    }
+
+    private function validarFechaPostergacion(Request $request, Prestamo $prestamo): void
+    {
+        abort_unless(
+            $prestamo->estado === 'activo'
+                && $request->query('fecha_vencimiento') === $prestamo->fecha_vencimiento->toDateString(),
+            410,
+        );
     }
 
     public function marcarComoDevuelto(Request $request, Prestamo $prestamo, PrestamoService $service): RedirectResponse

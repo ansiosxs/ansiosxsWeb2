@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Anuncio;
+use App\Models\ConfiguracionGeneral;
 use App\Models\Prestamo;
 use App\Models\Socio;
 use App\Support\RichTextSanitizer;
@@ -18,6 +19,7 @@ class DashboardController extends Controller
 {
     public function __invoke(Request $request, RichTextSanitizer $htmlSanitizer): View
     {
+        $configuracion = ConfiguracionGeneral::actual();
         $anuncios = Anuncio::query()
             ->whereDate('publicar_desde', '<=', today())
             ->where(fn ($query) => $query->whereNull('publicar_hasta')->orWhereDate('publicar_hasta', '>=', today()))
@@ -91,6 +93,7 @@ class DashboardController extends Controller
             'comunasTooltip' => $comunasTooltip,
             'maxComuna' => $maxComuna,
             'morosos' => (int) Prestamo::query()->where('estado', 'activo')->whereDate('fecha_vencimiento', '<', today())->selectRaw('COALESCE(SUM(cantidad - cantidad_devuelta), 0) as total')->value('total'),
+            'estadisticasVisibles' => $configuracion->estadisticas_dashboard ?? [],
         ]);
     }
 

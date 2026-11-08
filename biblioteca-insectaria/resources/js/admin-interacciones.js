@@ -88,6 +88,9 @@ document.querySelectorAll('[data-run-validation]').forEach((form) => {
 });
 
 document.querySelectorAll('[data-libros-url]').forEach((form) => {
+    const socioBusqueda = form.querySelector('[data-socio-busqueda]');
+    const sociosSelect = form.querySelector('[data-socios-select]');
+    const socioEstado = form.querySelector('[data-socio-estado]');
     const busqueda = form.querySelector('[data-libro-busqueda]');
     const resultados = form.querySelector('[data-libro-resultados]');
     const estado = form.querySelector('[data-libro-estado]');
@@ -102,6 +105,40 @@ document.querySelectorAll('[data-libros-url]').forEach((form) => {
     );
     let temporizador;
     let controlador;
+
+    function normalizarBusquedaSocio(valor) {
+        return valor
+            .toLocaleLowerCase('es')
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .trim();
+    }
+
+    function filtrarSocios() {
+        const termino = normalizarBusquedaSocio(socioBusqueda.value);
+        const rutBuscado = termino.replace(/[.\-\s]/g, '');
+        const palabras = termino.split(/\s+/).filter(Boolean);
+        let coincidencias = 0;
+
+        [...sociosSelect.options].slice(1).forEach((opcion) => {
+            const nombre = normalizarBusquedaSocio(opcion.dataset.socioNombre);
+            const rut = opcion.dataset.socioRun.replace(/[.\-\s]/g, '').toLocaleLowerCase('es');
+            const coincide = !termino
+                || palabras.every((palabra) => nombre.includes(palabra))
+                || (rutBuscado !== '' && rut.includes(rutBuscado));
+            opcion.hidden = !coincide;
+            if (coincide) coincidencias++;
+        });
+
+        if (termino) sociosSelect.value = '';
+        socioEstado.textContent = termino
+            ? coincidencias
+                ? `${coincidencias} socio(s) encontrado(s). Selecciona uno de la lista.`
+                : 'No se encontraron socios con ese nombre o RUT.'
+            : 'Escribe para filtrar la lista de socios.';
+    }
+
+    socioBusqueda.addEventListener('input', filtrarSocios);
 
     function completar(libro) {
         libroId.value = libro.id;

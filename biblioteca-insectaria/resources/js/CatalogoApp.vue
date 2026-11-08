@@ -3,6 +3,7 @@ import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
 
 const props = defineProps({
     muebles: { type: Array, required: true },
+    editUrlTemplate: { type: String, default: '' },
 });
 
 const query = ref('');
@@ -148,6 +149,10 @@ async function showBook(book) {
 function closeBook() {
     selectedBook.value = null;
 }
+
+function editUrl(book) {
+    return props.editUrlTemplate.replace('__LIBRO_ID__', String(book.id));
+}
 </script>
 
 <template>
@@ -180,6 +185,7 @@ function closeBook() {
                 <span :class="['availability', book.disponible ? 'available' : 'unavailable']">{{ book.cantidad_disponible }} disponible(s)</span>
                 <p v-if="book.mueble" class="book-location">Ubicación: {{ book.mueble }}</p>
                 <button class="text-button" type="button" @click="showBook(book)">Ver detalles</button>
+                <a v-if="props.editUrlTemplate" class="text-button catalog-edit-link" :href="editUrl(book)">Editar libro</a>
             </div>
         </article>
     </section>
@@ -202,6 +208,7 @@ function closeBook() {
             <p v-if="selectedBook.descripcion">Descripción: {{ selectedBook.descripcion }}</p>
             <p v-if="selectedBook.mueble">Ubicación: {{ selectedBook.mueble }}</p>
             <p>{{ selectedBook.cantidad_disponible }} unidades disponibles.</p>
+            <a v-if="props.editUrlTemplate" class="button button-secondary" :href="editUrl(selectedBook)">Editar libro</a>
         </section>
     </div>
 </template>

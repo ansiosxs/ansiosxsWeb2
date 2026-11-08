@@ -47,11 +47,20 @@
     </dialog>
     @endif
 @endif
+@if (count(array_intersect(['socios_vigentes', 'unidades_vencidas', 'unidades_prestadas'], $estadisticasVisibles)) > 0)
 <div class="stats-grid">
+    @if (in_array('socios_vigentes', $estadisticasVisibles, true))
     <article class="stat-card"><span class="font-semibold text-[#716c77]">Socios con membresía vigente</span><strong>{{ $sociosActivos }}</strong><span class="text-sm text-[#716c77]">Membresías activas</span></article>
+    @endif
+    @if (in_array('unidades_vencidas', $estadisticasVisibles, true))
     <article class="stat-card"><span class="font-semibold text-[#716c77]">Unidades vencidas</span><strong class="text-[#a62837]">{{ $morosos }}</strong><a class="font-bold" href="{{ route('admin.morosidad') }}">Revisar morosidad <span aria-hidden="true">→</span></a></article>
+    @endif
+    @if (in_array('unidades_prestadas', $estadisticasVisibles, true))
     <article class="stat-card"><span class="font-semibold text-[#716c77]">Unidades prestadas</span><strong>{{ $prestamosActivos }}</strong><a class="font-bold" href="{{ route('admin.prestamos.index') }}">Gestionar préstamos <span aria-hidden="true">→</span></a></article>
+    @endif
 </div>
+@endif
+@if (in_array('prestamos_por_mes', $estadisticasVisibles, true))
 <section class="panel"><h2 class="font-display font-bold text-[#35234f]">Unidades prestadas por mes</h2>
     <div class="mb-4 flex flex-wrap items-end justify-between gap-3">
         <p class="muted mb-0">Total de unidades entregadas en cada mes del año</p>
@@ -77,12 +86,16 @@
         @endforeach
     </div>
 </section>
+@endif
+@if (in_array('libros_mas_prestados', $estadisticasVisibles, true) || in_array('socios_por_comuna', $estadisticasVisibles, true))
 <div class="grid-two">
+    @if (in_array('libros_mas_prestados', $estadisticasVisibles, true))
     <section class="panel">
         <div class="mb-3 flex flex-wrap items-start justify-between gap-3">
             <div><h2 class="font-display font-bold text-[#35234f]">Libros más prestados</h2>
         <p class="muted">Los cinco títulos con más unidades prestadas</p>
             </div>
+            @endif
             <a class="button button-secondary" href="{{ route('admin.estadisticas.libros-mas-prestados') }}">Ver detalle</a>
         </div>
         @forelse ($librosMasPrestados as $libro)
@@ -94,6 +107,8 @@
             </div>
         @empty<p>Aún no hay préstamos registrados.</p>@endforelse
     </section>
+    @endif
+    @if (in_array('socios_por_comuna', $estadisticasVisibles, true))
 <section class="panel">
             <h2 class="font-display font-bold text-[#35234f]">Socios por comuna</h2>
             @if ($comunas->isNotEmpty())
@@ -123,5 +138,6 @@
                 <p>Sin información todavía.</p>
             @endif
         </section>
+    @endif
 </div>
 @endsection

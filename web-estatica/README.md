@@ -33,11 +33,11 @@ python3 -m http.server 8080
 Las páginas de inicio, noticias y enlaces cargan sus datos desde la API
 Laravel. La portada muestra las tres noticias más recientes. En desarrollo
 local, inicia también `biblioteca-insectaria` en el puerto `8001`;
-el sitio detecta `localhost` y consulta esa API automáticamente. En producción
-usan la URL pública configurada en sus respectivos archivos HTML.
-El acceso **Catálogo** de la navegación apunta actualmente a
-`http://127.0.0.1:8001/`. Cuando se publique la biblioteca, actualiza el enlace
-en `partials/nav.html` a `https://biblioteca.ansiosxs.cl/`.
+el sitio detecta `localhost` y consulta esa API automáticamente. En producción usan la URL pública configurada en sus respectivos archivos
+HTML. El acceso **Catálogo** apunta a
+`https://biblioteca.ansiosxs.cl/`; para desarrollo local puedes cambiar
+temporalmente el enlace de `partials/nav.html` a `http://127.0.0.1:8001/` y
+regenerar las páginas.
 
 La página `enlaces.html` está pensada para compartir desde redes sociales. Sus
 botones y su orden se administran desde **Administración → Enlaces públicos**

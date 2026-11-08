@@ -259,6 +259,11 @@ h3 { font-size: 1.05rem; }
 .grid-two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
 .form-stack { display: grid; gap: 1rem; }
 .form-stack label, .search-form label, .catalog-search label { display: grid; gap: .4rem; font-weight: 700; }
+.form-stack .recordatorio-toggle { display: grid; grid-template-columns: 1rem minmax(0, 1fr); align-items: start; column-gap: .75rem; }
+.recordatorio-toggle input[type="checkbox"] { grid-column: 1; grid-row: 1; width: 1rem; height: 1rem; margin: .2rem 0 0; accent-color: var(--purple); }
+.recordatorio-toggle > span { grid-column: 2; grid-row: 1; }
+.recordatorio-toggle span { display: grid; gap: .2rem; }
+.recordatorio-toggle small { color: var(--muted); font-weight: 400; }
 .loan-book-search { display: flex; gap: .65rem; }
 .loan-scan-button { flex: none; }
 .isbn-scanner { display: grid; grid-template-columns: minmax(0, 1fr) minmax(12rem, .6fr); gap: 1rem; align-items: center; padding: 1rem; border: 2px solid #2d2d2d; border-radius: 1rem; background: #f5efff; }
@@ -298,8 +303,11 @@ th { background: #fff0b3; color: var(--purple-dark); font-size: .85rem; }
 .public-page { background: #fcfaff; }
 .public-header { position: sticky; top: 0; z-index: 20; background: #fcfaffed; color: #2d2d2d; border-bottom: 2px solid #2d2d2d; backdrop-filter: blur(10px); }
 .public-header-inner { max-width: 1280px; min-height: 5rem; margin: auto; padding: .65rem 1rem; display: flex; justify-content: space-between; gap: 1rem; align-items: center; }
-.public-header-inner a:last-child { border: 2px solid #2d2d2d; border-radius: 9999px; padding: .55rem 1rem; background: #ffdb31; color: #2d2d2d; font-weight: 800; text-decoration: none; box-shadow: 2px 2px 0 #2d2d2d; transition: transform .2s ease; }
-.public-header-inner a:last-child:hover { transform: translate(-2px, -2px); box-shadow: 4px 4px 0 #f28cc9; }
+.public-header-actions { display: flex; align-items: center; justify-content: flex-end; gap: .75rem; }
+.public-header-user { color: #35234f; font-weight: 700; }
+.public-header-actions form { margin: 0; }
+.public-header-action { display: inline-block; border: 2px solid #2d2d2d; border-radius: 9999px; padding: .55rem 1rem; background: #ffdb31; color: #2d2d2d; font: inherit; font-weight: 800; text-decoration: none; box-shadow: 2px 2px 0 #2d2d2d; transition: transform .2s ease; cursor: pointer; }
+.public-header-action:hover { transform: translate(-2px, -2px); box-shadow: 4px 4px 0 #f28cc9; }
 .public-brand img { display: block; width: clamp(9.5rem, 24vw, 13rem); height: auto; }
 .catalog-main { max-width: 1280px; margin: auto; padding: 2.5rem 1.25rem 4rem; }
 .catalog-intro { position: relative; display: grid; min-height: 15rem; place-content: center; max-width: 66rem; margin: 0 auto 1.6rem; padding: 2rem 8rem; text-align: center; isolation: isolate; }
@@ -323,6 +331,9 @@ th { background: #fff0b3; color: var(--purple-dark); font-size: .85rem; }
 .available { background: #e2f3e5; color: #1f642c; }
 .unavailable { background: #fbe7e8; color: #842933; }
 .book-location { margin-top: .5rem; font-size: .88rem; }
+.book-info .text-button,
+.catalog-edit-link { width: fit-content; }
+.catalog-edit-link { display: block; margin-top: .55rem; }
 .catalog-load-more { display: grid; justify-items: center; gap: .75rem; margin-top: 1.5rem; }
 .catalog-load-trigger { width: 100%; height: 1px; }
 .announcements { max-width: 50rem; margin: 0 auto 1rem; }
@@ -356,7 +367,9 @@ th { background: #fff0b3; color: var(--purple-dark); font-size: .85rem; }
     .admin-header nav a { font-size: .85rem; }
     .public-header-inner { min-height: 4.25rem; align-items: center; }
     .public-brand img { width: 9.5rem; }
-    .public-header-inner a:last-child { padding: .45rem .7rem; font-size: .82rem; }
+    .public-header-actions { gap: .45rem; }
+    .public-header-user { max-width: 7rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: .82rem; }
+    .public-header-action { padding: .45rem .7rem; font-size: .82rem; }
     .catalog-main { padding: 1.5rem .75rem 3rem; }
     .catalog-intro { min-height: 12rem; padding: 1.5rem .5rem; }
     .catalog-mascot { width: 4.5rem; opacity: .75; }
